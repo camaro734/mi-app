@@ -106,5 +106,15 @@ export const dataActions = {
           }
         : wo
     ));
+  },
+
+  // Appointment actions
+  addAppointment: (appointments, setAppointments) => (appointmentData) => {
+    const newAppointment = {
+      ...appointmentData,
+      id: Date.now(),
+      status: 'Confirmada'
+    };
+    setAppointments(prev => [...prev, newAppointment]);
   }
 };

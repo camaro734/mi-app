@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Settings, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [companyLogo, setCompanyLogo] = useState(null);
@@ -61,37 +61,36 @@ export default function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4">
+    <header className="bg-white border-b border-gray-200 px-4 sm:px-6 py-3 sticky top-0 z-40">
       <div className="flex items-center justify-between">
-        {/* Logo y título de la empresa */}
+        {/* Left side: Menu button (mobile) + Logo */}
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
-            {companyLogo ? (
-              <img 
-                src={companyLogo} 
-                alt="Logo de la empresa" 
-                className="w-full h-full object-contain"
-              />
-            ) : (
-              <span className="text-white font-bold text-lg">C</span>
-            )}
+          <div className="lg:hidden">
+            <Button variant="ghost" size="icon" onClick={onMenuClick}>
+              <Menu className="h-6 w-6" />
+            </Button>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">CMG HIDRÁULICA S.L.</h1>
-            <p className="text-sm text-gray-500">Sistema de Gestión</p>
+          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center overflow-hidden">
+              {companyLogo ? (
+                <img 
+                  src={companyLogo} 
+                  alt="Logo de la empresa" 
+                  className="w-full h-full object-contain"
+                />
+              ) : (
+                <span className="text-white font-bold text-lg">C</span>
+              )}
+            </div>
+            <div className="hidden sm:block">
+              <h1 className="text-xl font-bold text-gray-900">CMG HIDRÁULICA S.L.</h1>
+              <p className="text-sm text-gray-500">Sistema de Gestión</p>
+            </div>
           </div>
         </div>
 
-        {/* Acciones del usuario */}
+        {/* Right side: User actions */}
         <div className="flex items-center space-x-4">
-          {/* Notificaciones */}
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-              3
-            </span>
-          </Button>
-
           {/* Menú de usuario */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -102,7 +101,7 @@ export default function Header() {
                     {user?.name?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-left">
+                <div className="text-left hidden md:block">
                   <p className="text-sm font-medium">{user?.name}</p>
                   <p className="text-xs text-gray-500">{user?.role}</p>
                 </div>

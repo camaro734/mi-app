@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
@@ -8,21 +8,21 @@ import {
   Users, 
   AlertTriangle, 
   Clock, 
-  CheckCircle,
   TrendingUp,
   Wrench,
   UserCheck
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import AttendanceClockModal from '@/components/attendance/AttendanceClockModal';
 import AttendanceReports from '@/components/attendance/AttendanceReports';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { workOrders, personnel, appointments } = useData();
   const navigate = useNavigate();
   const [showAttendanceClock, setShowAttendanceClock] = useState(false);
   const [showAttendanceReports, setShowAttendanceReports] = useState(false);
@@ -34,88 +34,61 @@ export default function Dashboard() {
     return 'Buenas noches';
   };
 
-  const stats = [
-    {
-      title: 'Partes Abiertos',
-      value: '12',
-      icon: FileText,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
-      change: '+2 desde ayer'
-    },
-    {
-      title: 'Citas Hoy',
-      value: '8',
-      icon: Calendar,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      change: '3 completadas'
-    },
-    {
-      title: 'Técnicos Activos',
-      value: '6',
-      icon: Users,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-      change: 'Todos disponibles'
-    },
-    {
-      title: 'Urgentes',
-      value: '3',
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100',
-      change: 'Requieren atención'
-    }
-  ];
+  const dashboardStats = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
 
-  const recentWorkOrders = [
-    {
-      id: 'WO-2024-001',
-      client: 'Construcciones García S.L.',
-      machine: 'Excavadora CAT 320D',
-      status: 'En curso',
-      technician: 'Miguel García',
-      priority: 'Alta'
-    },
-    {
-      id: 'WO-2024-002',
-      client: 'Transportes Martínez',
-      machine: 'Grúa Liebherr LTM 1050',
-      status: 'Pendiente',
-      technician: 'Carlos López',
-      priority: 'Media'
-    },
-    {
-      id: 'WO-2024-003',
-      client: 'Obras Públicas Valencia',
-      machine: 'Bulldozer Komatsu D65',
-      status: 'Completado',
-      technician: 'Ana Rodríguez',
-      priority: 'Baja'
-    }
-  ];
+    // Partes abiertos
+    const openWorkOrders = workOrders.filter(
+      wo => !['Completado', 'Validado', 'Cancelado', 'Facturado'].includes(wo.status)
+    ).length;
 
-  const upcomingAppointments = [
-    {
-      time: '09:00',
-      client: 'Industrias Pérez',
-      type: 'Mantenimiento preventivo',
-      technician: 'Miguel García'
-    },
-    {
-      time: '11:30',
-      client: 'Construcciones López',
-      type: 'Reparación urgente',
-      technician: 'Carlos López'
-    },
-    {
-      time: '14:00',
-      client: 'Transportes Valencia',
-      type: 'Revisión anual',
-      technician: 'Ana Rodríguez'
-    }
-  ];
+    // Citas para hoy
+    const appointmentsToday = appointments.filter(app => app.date === today).length;
+
+    // Técnicos activos (que han fichado presencia hoy)
+    const activeTechnicians = personnel.reduce((count, tech) => {
+      const attendanceKey = `attendance_${tech.id}_${today}`;
+      const savedAttendance = localStorage.getItem(attendanceKey);
+      if (savedAttendance) {
+        try {
+          const attendance = JSON.parse(savedAttendance);
+          const hasActiveEntry = attendance.some(entry => entry.type === 'clock_in' && !entry.clockOut);
+          if (hasActiveEntry) {
+            return count + 1;
+          }
+        } catch (e) {
+          console.error("Error parsing attendance data for tech:", tech.id, e);
+        }
+      }
+      return count;
+    }, 0);
+
+    // Partes urgentes abiertos
+    const urgentWorkOrders = workOrders.filter(
+      wo => wo.priority === 'Alta' && !['Completado', 'Validado', 'Cancelado', 'Facturado'].includes(wo.status)
+    ).length;
+
+    return [
+      { title: 'Partes Abiertos', value: openWorkOrders, icon: FileText, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+      { title: 'Citas Hoy', value: appointmentsToday, icon: Calendar, color: 'text-green-600', bgColor: 'bg-green-100' },
+      { title: 'Técnicos Activos', value: activeTechnicians, icon: Users, color: 'text-purple-600', bgColor: 'bg-purple-100' },
+      { title: 'Urgentes', value: urgentWorkOrders, icon: AlertTriangle, color: 'text-red-600', bgColor: 'bg-red-100' }
+    ];
+  }, [workOrders, personnel, appointments]);
+
+  const recentWorkOrders = useMemo(() => {
+    return [...workOrders]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 3);
+  }, [workOrders]);
+
+  const upcomingAppointments = useMemo(() => {
+    const today = new Date().toISOString().split('T')[0];
+    return appointments
+      .filter(app => app.date === today)
+      .sort((a, b) => a.time.localeCompare(b.time))
+      .slice(0, 3);
+  }, [appointments]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -219,7 +192,7 @@ export default function Dashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => {
+          {dashboardStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <motion.div
@@ -237,9 +210,6 @@ export default function Dashboard() {
                         </p>
                         <p className="text-3xl font-bold text-gray-900">
                           {stat.value}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {stat.change}
                         </p>
                       </div>
                       <div className={`p-3 rounded-full ${stat.bgColor}`}>
@@ -272,7 +242,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentWorkOrders.map((order) => (
+                  {recentWorkOrders.length > 0 ? recentWorkOrders.map((order) => (
                     <div key={order.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <p className="font-medium text-sm">{order.id}</p>
@@ -288,7 +258,9 @@ export default function Dashboard() {
                         </Badge>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                    <p className="text-center text-gray-500 py-4">No hay partes de trabajo recientes.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -304,15 +276,15 @@ export default function Dashboard() {
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Calendar className="h-5 w-5 mr-2" />
-                  Próximas Citas
+                  Próximas Citas de Hoy
                 </CardTitle>
                 <CardDescription>
-                  Agenda de hoy
+                  Agenda para el resto del día
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {upcomingAppointments.map((appointment, index) => (
+                  {upcomingAppointments.length > 0 ? upcomingAppointments.map((appointment, index) => (
                     <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex-shrink-0">
                         <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -327,7 +299,9 @@ export default function Dashboard() {
                         <p className="text-xs text-gray-500">Técnico: {appointment.technician}</p>
                       </div>
                     </div>
-                  ))}
+                  )) : (
+                     <p className="text-center text-gray-500 py-4">No hay más citas programadas para hoy.</p>
+                  )}
                 </div>
               </CardContent>
             </Card>

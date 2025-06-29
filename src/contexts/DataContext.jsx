@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { dataActions } from '@/contexts/data/dataActions';
+import { sampleAppointments } from '@/contexts/data/appointmentData';
 
 const DataContext = createContext();
 
@@ -19,22 +20,23 @@ export function DataProvider({ children }) {
   const [vacations, setVacations] = useState([]);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
+  const [appointments, setAppointments] = useState([]);
 
   // Cargar datos desde localStorage o usar arrays vacíos
   useEffect(() => {
-    const loadData = (key, setter) => {
+    const loadData = (key, setter, sampleData = []) => {
       try {
         const savedData = localStorage.getItem(key);
-        if (savedData) {
+        if (savedData && JSON.parse(savedData).length > 0) {
           setter(JSON.parse(savedData));
         } else {
-          setter([]);
-          localStorage.setItem(key, JSON.stringify([]));
+          setter(sampleData);
+          localStorage.setItem(key, JSON.stringify(sampleData));
         }
       } catch (error) {
         console.error(`Error loading ${key}:`, error);
-        setter([]);
-        localStorage.setItem(key, JSON.stringify([]));
+        setter(sampleData);
+        localStorage.setItem(key, JSON.stringify(sampleData));
       }
     };
 
@@ -135,58 +137,26 @@ export function DataProvider({ children }) {
     loadData('cmg_budgets', setBudgets);
     loadData('cmg_vacations', setVacations);
     loadData('cmg_clients', setClients);
+    loadData('cmg_appointments', setAppointments, sampleAppointments);
     loadUsers();
     loadPersonnel();
   }, []);
 
   // Guardar datos en localStorage cuando cambien
-  useEffect(() => {
-    localStorage.setItem('cmg_workOrders', JSON.stringify(workOrders));
-  }, [workOrders]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_materials', JSON.stringify(materials));
-  }, [materials]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_personnel', JSON.stringify(personnel));
-  }, [personnel]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_budgets', JSON.stringify(budgets));
-  }, [budgets]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_vacations', JSON.stringify(vacations));
-  }, [vacations]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_clients', JSON.stringify(clients));
-  }, [clients]);
-
-  useEffect(() => {
-    localStorage.setItem('cmg_users', JSON.stringify(users));
-  }, [users]);
+  useEffect(() => { localStorage.setItem('cmg_workOrders', JSON.stringify(workOrders)); }, [workOrders]);
+  useEffect(() => { localStorage.setItem('cmg_materials', JSON.stringify(materials)); }, [materials]);
+  useEffect(() => { localStorage.setItem('cmg_personnel', JSON.stringify(personnel)); }, [personnel]);
+  useEffect(() => { localStorage.setItem('cmg_budgets', JSON.stringify(budgets)); }, [budgets]);
+  useEffect(() => { localStorage.setItem('cmg_vacations', JSON.stringify(vacations)); }, [vacations]);
+  useEffect(() => { localStorage.setItem('cmg_clients', JSON.stringify(clients)); }, [clients]);
+  useEffect(() => { localStorage.setItem('cmg_users', JSON.stringify(users)); }, [users]);
+  useEffect(() => { localStorage.setItem('cmg_appointments', JSON.stringify(appointments)); }, [appointments]);
 
   const value = {
     // Data states
-    workOrders,
-    materials,
-    personnel,
-    budgets,
-    vacations,
-    clients,
-    users,
-    
+    workOrders, materials, personnel, budgets, vacations, clients, users, appointments,
     // Setters
-    setWorkOrders,
-    setMaterials,
-    setPersonnel,
-    setBudgets,
-    setVacations,
-    setClients,
-    setUsers,
-    
+    setWorkOrders, setMaterials, setPersonnel, setBudgets, setVacations, setClients, setUsers, setAppointments,
     // Actions
     addVacationRequest: dataActions.addVacationRequest(vacations, setVacations),
     updateVacationRequest: dataActions.updateVacationRequest(vacations, setVacations),
@@ -198,7 +168,8 @@ export function DataProvider({ children }) {
     updatePersonnel: dataActions.updatePersonnel(personnel, setPersonnel),
     deletePersonnel: dataActions.deletePersonnel(personnel, setPersonnel),
     addTimeEntry: dataActions.addTimeEntry(workOrders, setWorkOrders),
-    assignTechnician: dataActions.assignTechnician(workOrders, setWorkOrders)
+    assignTechnician: dataActions.assignTechnician(workOrders, setWorkOrders),
+    addAppointment: dataActions.addAppointment(appointments, setAppointments)
   };
 
   return (

@@ -48,7 +48,7 @@ export default function Sidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ x: isOpen ? 0 : -300 }}
+        animate={{ x: isOpen ? '0%' : '-100%' }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white shadow-lg border-r border-gray-200 lg:translate-x-0"
       >
@@ -63,7 +63,7 @@ export default function Sidebar({ isOpen, onClose }) {
           <ul className="space-y-2">
             {filteredMenuItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
               
               return (
                 <li key={item.path}>
@@ -73,7 +73,7 @@ export default function Sidebar({ isOpen, onClose }) {
                     className={`
                       flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors
                       ${isActive 
-                        ? 'bg-blue-100 text-blue-700 border-r-2 border-blue-700' 
+                        ? 'bg-blue-100 text-blue-700' 
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                       }
                     `}

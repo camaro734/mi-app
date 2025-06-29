@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import SettingsHeader from '@/components/settings/SettingsHeader';
@@ -15,9 +23,27 @@ import VacationManagementTab from '@/components/settings/VacationManagementTab';
 import AttendanceExportTab from '@/components/settings/AttendanceExportTab';
 import ProductivityReportsTab from '@/components/settings/ProductivityReportsTab';
 
+const TABS = [
+  { value: 'company', label: 'Empresa', roles: ['admin', 'supervisor', 'technician'] },
+  { value: 'vacations', label: 'Vacaciones', roles: ['admin', 'supervisor'] },
+  { value: 'vacation-management', label: 'Días Personal', roles: ['admin', 'supervisor'] },
+  { value: 'attendance', label: 'Fichadas', roles: ['admin', 'supervisor'] },
+  { value: 'productivity', label: 'Productividad', roles: ['admin', 'supervisor'] },
+  { value: 'system', label: 'Sistema', roles: ['admin'] },
+  { value: 'users', label: 'Usuarios', roles: ['admin'] },
+  { value: 'print', label: 'Impresión', roles: ['admin', 'supervisor'] },
+  { value: 'data', label: 'Datos', roles: ['admin'] },
+  { value: 'integrations', label: 'Integraciones', roles: ['admin'] },
+];
+
 export default function Settings() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('company');
+
+  const availableTabs = TABS.filter(tab => tab.roles.includes(user?.role));
+  const currentTabLabel = availableTabs.find(tab => tab.value === activeTab)?.label || 'Seleccionar';
+
   const [companySettings, setCompanySettings] = useState({
     name: 'CMG HIDRÁULICA S.L.',
     address: 'Polígono Industrial Norte, Nave 15, Valencia',
@@ -121,18 +147,33 @@ export default function Settings() {
         <SettingsHeader />
 
         {/* Settings Tabs */}
-        <Tabs defaultValue="company" className="space-y-4">
-          <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-10' : isSupervisor ? 'grid-cols-7' : 'grid-cols-2'}`}>
-            <TabsTrigger value="company">Empresa</TabsTrigger>
-            {isSupervisor && <TabsTrigger value="vacations">Vacaciones</TabsTrigger>}
-            {isSupervisor && <TabsTrigger value="vacation-management">Días Personal</TabsTrigger>}
-            {isSupervisor && <TabsTrigger value="attendance">Fichadas</TabsTrigger>}
-            {isSupervisor && <TabsTrigger value="productivity">Productividad</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="system">Sistema</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="users">Usuarios</TabsTrigger>}
-            {isSupervisor && <TabsTrigger value="print">Impresión</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="data">Datos</TabsTrigger>}
-            {isAdmin && <TabsTrigger value="integrations">Integraciones</TabsTrigger>}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          {/* Mobile Dropdown */}
+          <div className="sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full justify-between">
+                  {currentTabLabel}
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[calc(100vw-2rem)]">
+                {availableTabs.map(tab => (
+                  <DropdownMenuItem key={tab.value} onSelect={() => setActiveTab(tab.value)}>
+                    {tab.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Desktop Tabs */}
+          <TabsList className="hidden sm:grid w-full" style={{ gridTemplateColumns: `repeat(${availableTabs.length}, minmax(0, 1fr))` }}>
+            {availableTabs.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value}>
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="company">
