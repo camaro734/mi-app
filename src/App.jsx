@@ -12,6 +12,7 @@ import WorkOrderDetail from '@/pages/WorkOrderDetail';
 import CreateWorkOrder from '@/pages/CreateWorkOrder';
 import ClientAgenda from '@/pages/ClientAgenda';
 import Materials from '@/pages/Materials';
+import Tasks from '@/pages/Tasks';
 import Vacations from '@/pages/Vacations';
 import Settings from '@/pages/Settings';
 
@@ -71,6 +72,13 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Materials />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/tareas" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Tasks />
                   </Layout>
                 </ProtectedRoute>
               } />

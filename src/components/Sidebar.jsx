@@ -6,6 +6,7 @@ import {
   FileText, 
   Calendar, 
   Package, 
+  CheckSquare,
   Plane, 
   Settings,
   X
@@ -18,6 +19,7 @@ const menuItems = [
   { icon: FileText, label: 'Partes de Trabajo', path: '/partes', roles: ['admin', 'supervisor', 'technician'] },
   { icon: Calendar, label: 'Agenda de Clientes', path: '/agenda', roles: ['admin', 'supervisor'] },
   { icon: Package, label: 'Materiales', path: '/materiales', roles: ['admin', 'supervisor', 'technician'] },
+  { icon: CheckSquare, label: 'Tareas y Proyectos', path: '/tareas', roles: ['admin', 'supervisor', 'technician'] },
   { icon: Plane, label: 'Vacaciones', path: '/vacaciones', roles: ['admin', 'supervisor', 'technician'] },
   { icon: Settings, label: 'Ajustes', path: '/ajustes', roles: ['admin'] },
 ];
