@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block page_title %}Vehículos{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('nuevo_vehiculo') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Nuevo Vehículo
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if vehiculos %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Marca</th>
+                            <th>Modelo</th>
+                            <th>Tipo</th>
+                            <th>Matrícula</th>
+                            <th>Año</th>
+                            <th>Partes de Trabajo</th>
+                            <th>Fecha Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for vehiculo in vehiculos %}
+                        <tr>
+                            <td>
+                                <strong>{{ vehiculo.cliente.nombre }}</strong>
+                                {% if vehiculo.cliente.empresa %}
+                                    <br><small class="text-muted">{{ vehiculo.cliente.empresa }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ vehiculo.marca }}</td>
+                            <td>{{ vehiculo.modelo }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ vehiculo.tipo or 'N/A' }}</span>
+                            </td>
+                            <td>
+                                {% if vehiculo.matricula %}
+                                    <code>{{ vehiculo.matricula }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ vehiculo.año or '-' }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ vehiculo.partes_trabajo|length }}</span>
+                            </td>
+                            <td>{{ vehiculo.fecha_registro.strftime('%d/%m/%Y') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay vehículos registrados</h5>
+                <p class="text-muted">Comienza registrando tu primer vehículo</p>
+                <a href="{{ url_for('nuevo_vehiculo') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Registrar Vehículo
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

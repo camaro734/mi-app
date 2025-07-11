@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block page_title %}Partes de Trabajo{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('nuevo_parte') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Nuevo Parte
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if partes %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Número</th>
+                            <th>Cliente</th>
+                            <th>Vehículo</th>
+                            <th>Problema</th>
+                            <th>Estado</th>
+                            <th>Prioridad</th>
+                            <th>Técnico</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for parte in partes %}
+                        <tr>
+                            <td>
+                                <strong>{{ parte.numero_parte }}</strong>
+                            </td>
+                            <td>{{ parte.cliente.nombre }}</td>
+                            <td>
+                                {{ parte.vehiculo.marca }} {{ parte.vehiculo.modelo }}
+                                {% if parte.vehiculo.matricula %}
+                                    <br><small class="text-muted">{{ parte.vehiculo.matricula }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="{{ parte.descripcion_problema }}">
+                                    {{ parte.descripcion_problema }}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if parte.estado == 'completado' else 'warning' if parte.estado == 'en_proceso' else 'secondary' }}">
+                                    {{ parte.estado.replace('_', ' ').title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if parte.prioridad == 'urgente' else 'warning' if parte.prioridad == 'alta' else 'info' if parte.prioridad == 'normal' else 'secondary' }}">
+                                    {{ parte.prioridad.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if parte.tecnico %}
+                                    {{ parte.tecnico.nombre }}
+                                {% else %}
+                                    <span class="text-muted">Sin asignar</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ parte.fecha_inicio.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('ver_parte', id=parte.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="Ver detalles">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if parte.estado == 'en_proceso' %}
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-success" 
+                                            title="Completar"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#completarModal{{ parte.id }}">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay partes de trabajo</h5>
+                <p class="text-muted">Comienza creando tu primer parte de trabajo</p>
+                <a href="{{ url_for('nuevo_parte') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Crear Parte
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modales para completar partes -->
+{% for parte in partes %}
+{% if parte.estado == 'en_proceso' %}
+<div class="modal fade" id="completarModal{{ parte.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Completar Parte de Trabajo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('completar_parte', id=parte.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="trabajo_realizado" class="form-label">Trabajo Realizado *</label>
+                        <textarea class="form-control" id="trabajo_realizado" name="trabajo_realizado" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="horas_trabajo" class="form-label">Horas de Trabajo</label>
+                        <input type="number" class="form-control" id="horas_trabajo" name="horas_trabajo" step="0.5" min="0" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Completar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endblock %}

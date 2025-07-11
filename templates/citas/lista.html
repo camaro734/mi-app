@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block page_title %}Citas{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('nueva_cita') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Nueva Cita
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if citas %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Cliente</th>
+                            <th>Vehículo</th>
+                            <th>Servicio</th>
+                            <th>Fecha y Hora</th>
+                            <th>Técnico</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cita in citas %}
+                        <tr>
+                            <td>
+                                <strong>{{ cita.cliente.nombre }}</strong>
+                                {% if cita.cliente.empresa %}
+                                    <br><small class="text-muted">{{ cita.cliente.empresa }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if cita.vehiculo %}
+                                    {{ cita.vehiculo.marca }} {{ cita.vehiculo.modelo }}
+                                    {% if cita.vehiculo.matricula %}
+                                        <br><small class="text-muted">{{ cita.vehiculo.matricula }}</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ cita.tipo_servicio or 'N/A' }}</td>
+                            <td>
+                                <strong>{{ cita.fecha_hora.strftime('%d/%m/%Y') }}</strong>
+                                <br><small class="text-muted">{{ cita.fecha_hora.strftime('%H:%M') }}</small>
+                            </td>
+                            <td>
+                                {% if cita.tecnico %}
+                                    {{ cita.tecnico.nombre }}
+                                {% else %}
+                                    <span class="text-muted">Sin asignar</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if cita.estado == 'confirmada' else 'warning' if cita.estado == 'programada' else 'danger' if cita.estado == 'cancelada' else 'secondary' }}">
+                                    {{ cita.estado.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-primary" 
+                                            title="Cambiar estado"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#estadoModal{{ cita.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay citas programadas</h5>
+                <p class="text-muted">Comienza programando tu primera cita</p>
+                <a href="{{ url_for('nueva_cita') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Programar Cita
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modales para cambiar estado -->
+{% for cita in citas %}
+<div class="modal fade" id="estadoModal{{ cita.id }}" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cambiar Estado de Cita</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('cambiar_estado_cita', id=cita.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="estado" class="form-label">Nuevo Estado</label>
+                        <select class="form-select" name="estado" required>
+                            <option value="programada" {{ 'selected' if cita.estado == 'programada' }}>Programada</option>
+                            <option value="confirmada" {{ 'selected' if cita.estado == 'confirmada' }}>Confirmada</option>
+                            <option value="completada" {{ 'selected' if cita.estado == 'completada' }}>Completada</option>
+                            <option value="cancelada" {{ 'selected' if cita.estado == 'cancelada' }}>Cancelada</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <strong>Cliente:</strong> {{ cita.cliente.nombre }}<br>
+                        <strong>Fecha:</strong> {{ cita.fecha_hora.strftime('%d/%m/%Y %H:%M') }}<br>
+                        <strong>Servicio:</strong> {{ cita.tipo_servicio or 'N/A' }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Actualizar Estado
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% endblock %}

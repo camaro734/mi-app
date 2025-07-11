@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block page_title %}Usuarios{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('nuevo_usuario') }}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Nuevo Usuario
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        {% if usuarios %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Rol</th>
+                            <th>Estado</th>
+                            <th>Fecha Registro</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                        <tr>
+                            <td>
+                                <strong>{{ usuario.nombre }}</strong>
+                                {% if usuario.id == current_user.id %}
+                                    <span class="badge bg-primary">Tú</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ usuario.email }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'danger' if usuario.rol == 'admin' else 'info' if usuario.rol == 'tecnico' else 'warning' }}">
+                                    {{ usuario.rol.title() }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if usuario.activo else 'secondary' }}">
+                                    {{ 'Activo' if usuario.activo else 'Inactivo' }}
+                                </span>
+                            </td>
+                            <td>{{ usuario.fecha_registro.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                {% if usuario.id != current_user.id %}
+                                <div class="btn-group" role="group">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-warning" 
+                                            title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No hay usuarios registrados</h5>
+                <p class="text-muted">Comienza agregando tu primer usuario</p>
+                <a href="{{ url_for('nuevo_usuario') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Agregar Usuario
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

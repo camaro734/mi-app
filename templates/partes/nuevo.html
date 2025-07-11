@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block page_title %}Nuevo Parte de Trabajo{% endblock %}
+
+{% block page_actions %}
+<a href="{{ url_for('partes') }}" class="btn btn-secondary">
+    <i class="fas fa-arrow-left me-2"></i>Volver
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clipboard-plus me-2"></i>Nuevo Parte de Trabajo
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="cliente_id" class="form-label">Cliente *</label>
+                            <select class="form-select" id="cliente_id" name="cliente_id" required>
+                                <option value="">Seleccionar cliente...</option>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="vehiculo_id" class="form-label">Vehículo *</label>
+                            <select class="form-select" id="vehiculo_id" name="vehiculo_id" required>
+                                <option value="">Primero selecciona un cliente...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="prioridad" class="form-label">Prioridad</label>
+                            <select class="form-select" id="prioridad" name="prioridad">
+                                <option value="baja">Baja</option>
+                                <option value="normal" selected>Normal</option>
+                                <option value="alta">Alta</option>
+                                <option value="urgente">Urgente</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tecnico_id" class="form-label">Técnico</label>
+                            <select class="form-select" id="tecnico_id" name="tecnico_id">
+                                <option value="">Sin asignar</option>
+                                {% for tecnico in tecnicos %}
+                                <option value="{{ tecnico.id }}">{{ tecnico.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion_problema" class="form-label">Descripción del Problema *</label>
+                        <textarea class="form-control" id="descripcion_problema" name="descripcion_problema" rows="4" required 
+                                  placeholder="Describe detalladamente el problema o trabajo a realizar..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{{ url_for('partes') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Crear Parte
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    $('#cliente_id').change(function() {
+        var clienteId = $(this).val();
+        if (clienteId) {
+            $.get('/api/vehiculos/' + clienteId, function(data) {
+                var vehiculoSelect = $('#vehiculo_id');
+                vehiculoSelect.empty();
+                vehiculoSelect.append('<option value="">Seleccionar vehículo...</option>');
+                
+                data.forEach(function(vehiculo) {
+                    var option = $('<option></option>')
+                        .val(vehiculo.id)
+                        .text(vehiculo.marca + ' ' + vehiculo.modelo + 
+                              (vehiculo.matricula ? ' (' + vehiculo.matricula + ')' : ''));
+                    vehiculoSelect.append(option);
+                });
+            });
+        } else {
+            $('#vehiculo_id').empty().append('<option value="">Primero selecciona un cliente...</option>');
+        }
+    });
+});
+</script>
+{% endblock %}
