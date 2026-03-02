@@ -4,26 +4,34 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 120 20% 98%;
+    --foreground: 150 30% 10%;
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 150 30% 10%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222.2 84% 4.9%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 222.2 84% 4.9%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
-    --radius: 0.5rem;
+    --popover-foreground: 150 30% 10%;
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 30 80% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 120 10% 94%;
+    --muted-foreground: 150 10% 40%;
+    --accent: 142 50% 90%;
+    --accent-foreground: 142 76% 20%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 92% 15%;
+    --safe: 142 76% 36%;
+    --safe-foreground: 0 0% 100%;
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+    --caution: 38 92% 50%;
+    --caution-foreground: 38 92% 15%;
+    --border: 142 20% 88%;
+    --input: 142 20% 88%;
+    --ring: 142 76% 36%;
+    --radius: 0.75rem;
   }
 }
 
@@ -34,42 +42,100 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
 }
 
 @layer components {
-  .gradient-bg {
-    @apply bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800;
+  .safe-gradient {
+    @apply bg-gradient-to-br from-green-500 via-green-600 to-emerald-700;
   }
-  
+
+  .danger-gradient {
+    @apply bg-gradient-to-br from-red-500 via-red-600 to-red-700;
+  }
+
+  .caution-gradient {
+    @apply bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500;
+  }
+
   .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg hover:scale-105;
+    @apply transition-all duration-300 hover:shadow-lg active:scale-[0.98];
   }
-  
+
   .glass-effect {
-    @apply bg-white/10 backdrop-blur-md border border-white/20;
+    @apply bg-white/80 backdrop-blur-md border border-white/40;
+  }
+
+  .camera-overlay {
+    background: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.6) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0, 0, 0, 0.6) 100%
+    );
+  }
+
+  .scan-line {
+    animation: scan 2s ease-in-out infinite;
+  }
+
+  .pulse-ring {
+    animation: pulseRing 1.5s ease-out infinite;
+  }
+
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
-.signature-canvas {
-  border: 2px dashed #e2e8f0;
-  border-radius: 8px;
-  cursor: crosshair;
-}
-
-.progress-bar {
-  transition: width 0.3s ease-in-out;
-}
-
-.time-warning {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
+@keyframes scan {
   0%, 100% {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    transform: translateY(100%);
   }
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Hide scrollbar for clean mobile feel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
