@@ -2,36 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─────────────────────────────────────────────────────────────
+   Dosis — tema oscuro y calmado (anti-estímulo).
+   Paleta deliberadamente baja en saturación para NO generar
+   la dopamina visual que la propia app intenta reducir.
+   ───────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --background: 120 20% 98%;
-    --foreground: 150 30% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 150 30% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 150 30% 10%;
-    --primary: 142 76% 36%;
+    --background: 230 25% 7%;
+    --foreground: 220 18% 90%;
+    --card: 230 22% 11%;
+    --card-foreground: 220 18% 92%;
+    --popover: 230 22% 11%;
+    --popover-foreground: 220 18% 92%;
+    --primary: 243 55% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 30 80% 55%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 120 10% 94%;
-    --muted-foreground: 150 10% 40%;
-    --accent: 142 50% 90%;
-    --accent-foreground: 142 76% 20%;
-    --destructive: 0 84% 60%;
+    --secondary: 230 18% 18%;
+    --secondary-foreground: 220 18% 88%;
+    --muted: 230 18% 16%;
+    --muted-foreground: 220 10% 58%;
+    --accent: 243 40% 22%;
+    --accent-foreground: 243 70% 85%;
+    --destructive: 0 70% 55%;
     --destructive-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
-    --warning-foreground: 38 92% 15%;
-    --safe: 142 76% 36%;
-    --safe-foreground: 0 0% 100%;
-    --danger: 0 84% 60%;
-    --danger-foreground: 0 0% 100%;
-    --caution: 38 92% 50%;
-    --caution-foreground: 38 92% 15%;
-    --border: 142 20% 88%;
-    --input: 142 20% 88%;
-    --ring: 142 76% 36%;
-    --radius: 0.75rem;
+    --warning: 38 90% 55%;
+    --warning-foreground: 38 90% 12%;
+    --dopamine: 350 75% 60%;
+    --productive: 158 60% 45%;
+    --border: 230 18% 18%;
+    --input: 230 18% 18%;
+    --ring: 243 55% 62%;
+    --radius: 1rem;
   }
 }
 
@@ -44,98 +45,40 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
     -webkit-tap-highlight-color: transparent;
     overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer components {
-  .safe-gradient {
-    @apply bg-gradient-to-br from-green-500 via-green-600 to-emerald-700;
+  .card-soft {
+    @apply bg-card border border-border rounded-2xl;
   }
-
-  .danger-gradient {
-    @apply bg-gradient-to-br from-red-500 via-red-600 to-red-700;
+  .ios-blur {
+    @apply bg-background/70 backdrop-blur-xl;
   }
-
-  .caution-gradient {
-    @apply bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500;
+  .breathe {
+    animation: breathe 6s ease-in-out infinite;
   }
-
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-lg active:scale-[0.98];
+  .fade-in {
+    animation: fadeIn 0.4s ease-out both;
   }
-
-  .glass-effect {
-    @apply bg-white/80 backdrop-blur-md border border-white/40;
-  }
-
-  .camera-overlay {
-    background: linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.6) 0%,
-      transparent 25%,
-      transparent 75%,
-      rgba(0, 0, 0, 0.6) 100%
-    );
-  }
-
-  .scan-line {
-    animation: scan 2s ease-in-out infinite;
-  }
-
-  .pulse-ring {
-    animation: pulseRing 1.5s ease-out infinite;
-  }
-
-  .float-animation {
-    animation: float 3s ease-in-out infinite;
-  }
-
   .bottom-nav {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
-}
-
-@keyframes scan {
-  0%, 100% {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(100%);
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }
 
-@keyframes pulseRing {
-  0% {
-    transform: scale(0.8);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.12); opacity: 1; }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Hide scrollbar for clean mobile feel */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
