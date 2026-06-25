@@ -190,7 +190,7 @@ logger.error = (msg, options) => {
 }
 
 export default defineConfig({
-	base: '/',
+	base: isDev ? '/' : '/mi-app/',
 	customLogger: logger,
 	plugins: [
 		...(isDev ? [inlineEditPlugin(), editModeDevPlugin()] : []),

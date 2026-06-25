@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main, master]
+    branches: [main, master, claude/dopamine-blocker-app-l8z5i2]
+  workflow_dispatch:
 
 permissions:
   contents: read
