@@ -1,0 +1,11 @@
+# Artefactos generados por Xcode / XcodeGen
+CEOAssistant.xcodeproj/
+*.xcworkspace/
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+
+# Dependencias del backend
+Backend/node_modules/
+Backend/.env

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>Atlas CEO</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+
+    <!-- Permisos -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Atlas necesita el micrófono para grabar tus reuniones y transcribirlas.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Atlas transcribe tus grabaciones en el dispositivo para crear resúmenes.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>Atlas lee tu calendario para avisarte de tus próximas citas.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>Atlas lee y crea eventos para gestionar tus citas y seguimientos.</string>
+
+    <!-- Ejecución en segundo plano para terminar transcripciones/envíos -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>audio</string>
+        <string>processing</string>
+    </array>
+</dict>
+</plist>
