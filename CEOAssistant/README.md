@@ -26,6 +26,13 @@ El resumen de cada reunión no es un texto plano: la IA devuelve **titular,
 resumen ejecutivo, decisiones, acciones (con responsable y plazo), riesgos y
 seguimientos** — formato pensado para decidir, no para leer.
 
+**Además incluye:**
+- 🗣️ **Atajos de Siri** (App Intents): *"Oye Siri, pregunta a Atlas…"*,
+  *"…resume mi última reunión"*, *"…graba una reunión"*, *"…dame mi briefing"*.
+  Atlas responde por voz sin abrir la app.
+- ⌚ **Complicación de esfera** (WidgetKit): tu próxima cita de un vistazo, en
+  varios tamaños de complicación (circular, rectangular, esquina, en línea).
+
 ---
 
 ## 🏗️ Arquitectura
@@ -61,11 +68,13 @@ CEOAssistant/
 │   ├── Services/            # AIService (Claude), Transcription, Calendar,
 │   │                        # AudioRecorder, WatchConnectivity, AssistantStore
 │   ├── Prompts/             # personalidad y prompts del asistente
+│   ├── Intents/             # App Intents (atajos de Siri)
 │   └── Utils/               # configuración
 ├── iOS/                     # app de iPhone (SwiftUI)
 │   └── Views/               # Briefing, Reuniones, Asesor, Agenda, Ajustes...
 ├── WatchApp/                # app de Apple Watch (SwiftUI)
 │   └── Views/               # Grabar, Asesor, Dictar, Próxima cita
+├── WatchWidgets/            # complicación de esfera (WidgetKit)
 └── Backend/                 # (opcional) envío automático de correos por SMTP
 ```
 
@@ -129,9 +138,9 @@ Las claves se guardan **cifradas en el Keychain**, nunca en código ni en la nub
 
 ## 🗺️ Ideas para siguientes versiones
 
-- **Complicación** en la esfera del Watch con la próxima cita / botón de grabar.
+- ✅ ~~Complicación en la esfera del Watch con la próxima cita.~~ (hecho)
+- ✅ ~~Siri Shortcuts: "Oye Siri, resume mi última reunión".~~ (hecho)
 - **Live Activity / Dynamic Island** mientras se graba o procesa.
-- **Siri Shortcuts**: "Oye Siri, resume mi última reunión".
 - Envío automático de resúmenes vía backend (carpeta `Backend/`).
 - Crear eventos de seguimiento en el calendario directamente desde una acción.
 - Memoria del asesor: que conozca tus KPIs y el contexto de CMG Hidráulica.

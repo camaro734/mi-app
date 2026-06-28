@@ -56,3 +56,21 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ENABLE_PREVIEWS: YES
         WATCHOS_DEPLOYMENT_TARGET: "10.0"
+    dependencies:
+      - target: "CEOAssistant Watch Widgets"
+        embed: true
+
+  # ---------------------------------------------------------------------------
+  # Complicación de esfera (WidgetKit) para el Apple Watch.
+  # ---------------------------------------------------------------------------
+  "CEOAssistant Watch Widgets":
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: WatchWidgets
+      - path: Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cmghidraulica.ceoassistant.watchkitapp.widgets
+        INFOPLIST_FILE: WatchWidgets/Info.plist
+        WATCHOS_DEPLOYMENT_TARGET: "10.0"

@@ -271,4 +271,17 @@ final class AssistantStore: ObservableObject {
         conversation = snap.conversation
         notes = snap.notes
     }
+
+    /// Lectura ligera del historial desde disco, sin inicializar el store
+    /// completo. La usan los App Intents (Siri/Atajos).
+    static func loadSnapshotRecordings() -> [Recording] {
+        let url = FileManager.default
+            .urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("assistant-store.json")
+        guard let data = try? Data(contentsOf: url),
+              let snap = try? JSONDecoder().decode(Snapshot.self, from: data) else {
+            return []
+        }
+        return snap.recordings
+    }
 }
