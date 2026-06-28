@@ -47,6 +47,8 @@ final class CalendarService {
     }
 
     /// Crea un evento (p. ej. seguimiento de una reunión).
+    /// Solo en iOS: watchOS no permite guardar eventos en el calendario.
+    #if os(iOS)
     @discardableResult
     func createEvent(title: String, start: Date, durationMinutes: Int = 30,
                      notes: String? = nil) throws -> String {
@@ -62,4 +64,5 @@ final class CalendarService {
         try store.save(event, span: .thisEvent)
         return event.eventIdentifier ?? ""
     }
+    #endif
 }

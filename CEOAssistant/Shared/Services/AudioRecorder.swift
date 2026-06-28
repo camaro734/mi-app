@@ -30,8 +30,13 @@ final class AudioRecorder: NSObject, ObservableObject {
     @discardableResult
     func start() throws -> URL {
         let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .default,
-                                options: [.duckOthers, .defaultToSpeaker])
+        // `.defaultToSpeaker` solo existe en iOS; en watchOS se omite.
+        #if os(iOS)
+        let options: AVAudioSession.CategoryOptions = [.duckOthers, .defaultToSpeaker]
+        #else
+        let options: AVAudioSession.CategoryOptions = [.duckOthers]
+        #endif
+        try session.setCategory(.playAndRecord, mode: .default, options: options)
         try session.setActive(true)
 
         let fileName = "rec-\(UUID().uuidString).m4a"

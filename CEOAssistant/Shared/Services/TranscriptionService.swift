@@ -1,5 +1,7 @@
 import Foundation
+#if canImport(Speech)
 import Speech
+#endif
 
 protocol TranscriptionService {
     /// Transcribe un fichero de audio a texto.
@@ -21,8 +23,10 @@ enum TranscriptionError: LocalizedError {
 
 // MARK: - Transcripción en el dispositivo (Apple Speech)
 
+#if canImport(Speech)
 /// Usa el framework Speech de Apple. Privado y sin coste, ideal para reuniones
 /// confidenciales. Requiere las claves de uso en Info.plist.
+/// Disponible solo en plataformas con el framework Speech (iOS), no en watchOS.
 final class AppleSpeechTranscriber: TranscriptionService {
     private let locale: Locale
     init(locale: Locale = Locale(identifier: "es-ES")) { self.locale = locale }
@@ -63,6 +67,7 @@ final class AppleSpeechTranscriber: TranscriptionService {
         guard status == .authorized else { throw TranscriptionError.notAuthorized }
     }
 }
+#endif
 
 // MARK: - Transcripción con Whisper (OpenAI)
 

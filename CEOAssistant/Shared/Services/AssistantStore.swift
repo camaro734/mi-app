@@ -32,7 +32,13 @@ final class AssistantStore: ObservableObject {
         let engine = TranscriptionEngine(rawValue: raw ?? "") ?? .appleOnDevice
         switch engine {
         case .appleOnDevice:
+            #if canImport(Speech)
             return AppleSpeechTranscriber()
+            #else
+            // En watchOS no existe el framework Speech: la transcripción la hace
+            // el iPhone. Como salvaguarda usamos Whisper si se invocara aquí.
+            return WhisperTranscriber(apiKeyProvider: { SecureStore.get(.openAIAPIKey) })
+            #endif
         case .whisperOpenAI:
             return WhisperTranscriber(apiKeyProvider: { SecureStore.get(.openAIAPIKey) })
         }

@@ -40,6 +40,7 @@ struct SummarizeLastMeetingIntent: AppIntent {
     static var description = IntentDescription(
         "Te dice el resumen de la última reunión que has grabado.")
 
+    @MainActor
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let recordings = AssistantStore.loadSnapshotRecordings()
         guard let last = recordings.first(where: { $0.summary != nil }),
