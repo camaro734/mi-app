@@ -129,18 +129,21 @@ final class AssistantStore: ObservableObject {
     // MARK: - Calendario
 
     func refreshCalendar() async {
-        // 1) Si hay sesión en Nexus (ERP), la agenda REAL de la empresa viene de ahí.
+        // 1) Si hay sesión en Nexus (ERP), la agenda REAL de la empresa viene de
+        //    ahí Y SOLO de ahí: no caemos al calendario del iPhone (eso ocultaría
+        //    un error y daría la impresión de que "usa el calendario del móvil").
         if NexusService.isLoggedIn {
             do {
                 appointments = try await nexus.upcomingAppointments(dias: 7)
                 scheduleAppointmentReminders(appointments)
-                return
+                statusMessage = nil
             } catch {
-                statusMessage = "No se pudieron leer las citas de Nexus: \(error.localizedDescription)"
-                // Sigue con el calendario del dispositivo como respaldo.
+                appointments = []
+                statusMessage = "Nexus: \(error.localizedDescription)"
             }
+            return
         }
-        // 2) Respaldo: calendario local del dispositivo (EventKit).
+        // 2) Sin sesión en Nexus: calendario local del dispositivo (EventKit).
         guard await calendar.requestAccess() else {
             if appointments.isEmpty { statusMessage = "Sin permiso de calendario." }
             return
@@ -184,6 +187,20 @@ final class AssistantStore: ObservableObject {
         NexusService.logout()
         nexusConnected = false
         Task { await refreshCalendar() }
+    }
+
+    /// Diagnóstico legible de la conexión con Nexus (para Ajustes).
+    func testNexus() async -> String {
+        guard NexusService.isLoggedIn else {
+            return "❌ No hay sesión guardada en Nexus (falta el token). Vuelve a conectar abajo."
+        }
+        do {
+            let citas = try await nexus.upcomingAppointments(dias: 7)
+            let partes = (try? await nexus.workOrders(limit: 50))?.count ?? 0
+            return "✅ Conexión OK.\nCitas próximas (7 días): \(citas.count)\nPartes activos: \(partes)\nURL: \(NexusService.baseURL)"
+        } catch {
+            return "⚠️ Conectado, pero al leer las citas: \(error.localizedDescription)\nURL: \(NexusService.baseURL)"
+        }
     }
 
     /// Contexto en vivo (citas + partes de Nexus) que se añade al prompt del

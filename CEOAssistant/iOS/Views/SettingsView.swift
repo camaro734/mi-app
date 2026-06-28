@@ -15,6 +15,8 @@ struct SettingsView: View {
     @State private var openAIKey = SecureStore.get(.openAIAPIKey) ?? ""
     @State private var nexusPassword = ""
     @State private var nexusConnecting = false
+    @State private var nexusTestResult: String?
+    @State private var nexusTesting = false
     @State private var savedFlash = false
 
     var body: some View {
@@ -45,9 +47,28 @@ struct SettingsView: View {
                         if !nexusUsername.isEmpty {
                             LabeledContent("Usuario", value: nexusUsername)
                         }
+                        Button {
+                            nexusTesting = true
+                            nexusTestResult = nil
+                            Task {
+                                let r = await store.testNexus()
+                                nexusTestResult = r
+                                nexusTesting = false
+                            }
+                        } label: {
+                            HStack {
+                                Text("Probar conexión")
+                                if nexusTesting { Spacer(); ProgressView() }
+                            }
+                        }
+                        .disabled(nexusTesting)
+                        if let r = nexusTestResult {
+                            Text(r).font(.caption).foregroundStyle(.secondary)
+                        }
                         Button("Cerrar sesión en Nexus", role: .destructive) {
                             store.disconnectNexus()
                             nexusPassword = ""
+                            nexusTestResult = nil
                         }
                     } else {
                         TextField("Usuario de Nexus", text: $nexusUsername)
