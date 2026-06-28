@@ -18,6 +18,7 @@ final class AssistantStore: ObservableObject {
     // MARK: Servicios
     private let ai: AIService
     private let calendar = CalendarService()
+    private let nexus = NexusService()
     private lazy var transcriber: TranscriptionService = makeTranscriber()
 
     init(ai: AIService? = nil) {
@@ -127,13 +128,27 @@ final class AssistantStore: ObservableObject {
     // MARK: - Calendario
 
     func refreshCalendar() async {
+        // 1) Si hay sesión en Nexus (ERP), la agenda REAL de la empresa viene de ahí.
+        if NexusService.isLoggedIn {
+            do {
+                appointments = try await nexus.upcomingAppointments(dias: 7)
+                scheduleAppointmentReminders(appointments)
+                return
+            } catch {
+                statusMessage = "No se pudieron leer las citas de Nexus: \(error.localizedDescription)"
+                // Sigue con el calendario del dispositivo como respaldo.
+            }
+        }
+        // 2) Respaldo: calendario local del dispositivo (EventKit).
         guard await calendar.requestAccess() else {
-            statusMessage = "Sin permiso de calendario."
+            if appointments.isEmpty { statusMessage = "Sin permiso de calendario." }
             return
         }
-        let appts = calendar.upcomingAppointments(days: 7)
-        appointments = appts
-        // Programa avisos para las próximas citas.
+        appointments = calendar.upcomingAppointments(days: 7)
+        scheduleAppointmentReminders(appointments)
+    }
+
+    private func scheduleAppointmentReminders(_ appts: [Appointment]) {
         for appt in appts.prefix(10) where appt.isUpcoming {
             NotificationManager.shared.scheduleAppointmentReminder(appt)
         }
@@ -141,6 +156,33 @@ final class AssistantStore: ObservableObject {
 
     var nextAppointment: Appointment? {
         appointments.first { $0.isUpcoming }
+    }
+
+    // MARK: - Nexus (ERP)
+
+    /// ¿Hay sesión activa con el ERP Nexus? La UI lo observa.
+    @Published var nexusConnected = NexusService.isLoggedIn
+
+    /// Inicia sesión en Nexus y refresca la agenda. Devuelve si tuvo éxito.
+    func connectNexus(username: String, password: String) async -> Bool {
+        do {
+            try await nexus.login(username: username, password: password)
+            nexusConnected = true
+            statusMessage = "Conectado a Nexus."
+            await refreshCalendar()
+            return true
+        } catch {
+            statusMessage = error.localizedDescription
+            nexusConnected = false
+            return false
+        }
+    }
+
+    /// Cierra la sesión de Nexus y vuelve al calendario del dispositivo.
+    func disconnectNexus() {
+        NexusService.logout()
+        nexusConnected = false
+        Task { await refreshCalendar() }
     }
 
     // MARK: - Briefing diario

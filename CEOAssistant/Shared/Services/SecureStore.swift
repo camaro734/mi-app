@@ -7,6 +7,9 @@ enum SecureStore {
     enum Key: String {
         case anthropicAPIKey = "com.cmghidraulica.ceoassistant.anthropicKey"
         case openAIAPIKey = "com.cmghidraulica.ceoassistant.openAIKey"
+        // Tokens de sesión del ERP Nexus (nunca se guarda la contraseña).
+        case nexusAccessToken = "com.cmghidraulica.ceoassistant.nexusAccess"
+        case nexusRefreshToken = "com.cmghidraulica.ceoassistant.nexusRefresh"
     }
 
     @discardableResult

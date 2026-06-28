@@ -17,6 +17,9 @@ enum AppConfig {
         static let transcriptionEngine = "config.transcriptionEngine"
         static let autoEmailSummaries = "config.autoEmailSummaries"
         static let aiModel = "config.aiModel"
+        // Integración con el ERP Nexus (finance-agent).
+        static let nexusBaseURL = "config.nexusBaseURL"
+        static let nexusUsername = "config.nexusUsername"
     }
 }
 

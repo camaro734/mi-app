@@ -2,14 +2,19 @@ import SwiftUI
 
 /// Ajustes: identidad, claves de IA, motor de transcripción y correo destino.
 struct SettingsView: View {
+    @EnvironmentObject var store: AssistantStore
     @AppStorage(AppConfig.Keys.userName) private var userName = ""
     @AppStorage(AppConfig.Keys.userEmail) private var userEmail = ""
     @AppStorage(AppConfig.Keys.autoEmailSummaries) private var autoEmail = false
     @AppStorage(AppConfig.Keys.transcriptionEngine) private var engineRaw =
         TranscriptionEngine.appleOnDevice.rawValue
+    @AppStorage(AppConfig.Keys.nexusUsername) private var nexusUsername = ""
+    @AppStorage(AppConfig.Keys.nexusBaseURL) private var nexusURL = "https://cmgnexus.es"
 
     @State private var anthropicKey = SecureStore.get(.anthropicAPIKey) ?? ""
     @State private var openAIKey = SecureStore.get(.openAIAPIKey) ?? ""
+    @State private var nexusPassword = ""
+    @State private var nexusConnecting = false
     @State private var savedFlash = false
 
     var body: some View {
@@ -31,6 +36,40 @@ struct SettingsView: View {
                     Text("Claves de IA")
                 } footer: {
                     Text("Las claves se guardan cifradas en el Keychain del dispositivo, nunca en la nube.")
+                }
+
+                Section {
+                    if store.nexusConnected {
+                        Label("Conectado a Nexus", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(.green)
+                        if !nexusUsername.isEmpty {
+                            LabeledContent("Usuario", value: nexusUsername)
+                        }
+                        Button("Cerrar sesión en Nexus", role: .destructive) {
+                            store.disconnectNexus()
+                            nexusPassword = ""
+                        }
+                    } else {
+                        TextField("Usuario de Nexus", text: $nexusUsername)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        SecureField("Contraseña de Nexus", text: $nexusPassword)
+                        Button {
+                            connectNexus()
+                        } label: {
+                            HStack {
+                                Text("Conectar con Nexus")
+                                if nexusConnecting {
+                                    Spacer(); ProgressView()
+                                }
+                            }
+                        }
+                        .disabled(nexusUsername.isEmpty || nexusPassword.isEmpty || nexusConnecting)
+                    }
+                } header: {
+                    Text("Nexus (ERP de la empresa)")
+                } footer: {
+                    Text("Inicia sesión con tu usuario de Nexus para que Atlas use la agenda real de citas de la empresa. Solo se guarda un token cifrado, nunca tu contraseña.")
                 }
 
                 Section("Transcripción") {
@@ -74,6 +113,17 @@ struct SettingsView: View {
         withAnimation { savedFlash = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation { savedFlash = false }
+        }
+    }
+
+    private func connectNexus() {
+        nexusConnecting = true
+        Task {
+            let ok = await store.connectNexus(
+                username: nexusUsername.trimmingCharacters(in: .whitespaces),
+                password: nexusPassword)
+            nexusConnecting = false
+            if ok { nexusPassword = "" }
         }
     }
 }

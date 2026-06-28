@@ -14,8 +14,8 @@ settings:
     MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
-    # TODO: pon aquí tu Apple Developer Team ID para firmar en dispositivo real.
-    DEVELOPMENT_TEAM: ""
+    # Team ID de CMG Metalhidraulica S.L (cuenta de desarrollador de pago).
+    DEVELOPMENT_TEAM: "4QGK7D748J"
     CODE_SIGN_STYLE: Automatic
 
 targets:
