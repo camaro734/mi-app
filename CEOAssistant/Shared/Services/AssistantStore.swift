@@ -109,8 +109,9 @@ final class AssistantStore: ObservableObject {
         conversation.append(userMsg)
         isBusy = true
         defer { isBusy = false }
+        let context = await companyContextForAdvisor()
         do {
-            let answer = try await ai.reply(to: conversation)
+            let answer = try await ai.reply(to: conversation, context: context)
             conversation.append(AdviceMessage(role: .assistant, content: answer))
         } catch {
             conversation.append(AdviceMessage(
@@ -183,6 +184,43 @@ final class AssistantStore: ObservableObject {
         NexusService.logout()
         nexusConnected = false
         Task { await refreshCalendar() }
+    }
+
+    /// Contexto en vivo (citas + partes de Nexus) que se añade al prompt del
+    /// Asesor para que pueda responder con datos reales de la empresa.
+    private func companyContextForAdvisor() async -> String? {
+        guard NexusService.isLoggedIn else { return nil }
+        var blocks: [String] = []
+
+        // Próximas citas (refresca para tenerlas al día).
+        await refreshCalendar()
+        let df = DateFormatter()
+        df.locale = Locale(identifier: "es_ES")
+        df.dateFormat = "EEE d MMM HH:mm"
+        if appointments.isEmpty {
+            blocks.append("## Próximas citas (7 días)\nNo hay citas registradas en los próximos 7 días.")
+        } else {
+            let lines = appointments.prefix(15).map { a -> String in
+                var l = "- \(df.string(from: a.startDate)): \(a.title)"
+                if let loc = a.location, !loc.isEmpty { l += " · \(loc)" }
+                if let n = a.notes, !n.isEmpty { l += " · \(n)" }
+                return l
+            }
+            blocks.append("## Próximas citas (7 días)\n" + lines.joined(separator: "\n"))
+        }
+
+        // Partes de trabajo activos (no incluye citas).
+        if let partes = try? await nexus.workOrders(limit: 30), !partes.isEmpty {
+            let lines = partes.prefix(20).map { p -> String in
+                let num = p["order_number"] as? String ?? "—"
+                let cli = p["customer_name"] as? String ?? ""
+                let est = p["status"] as? String ?? ""
+                return "- \(num) · \(cli) · \(est)"
+            }
+            blocks.append("## Partes de trabajo activos (\(partes.count))\n" + lines.joined(separator: "\n"))
+        }
+
+        return blocks.isEmpty ? nil : blocks.joined(separator: "\n\n")
     }
 
     // MARK: - Briefing diario

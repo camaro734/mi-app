@@ -38,10 +38,15 @@ struct AdvisorView: View {
     private var suggestions: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Pregúntame, por ejemplo:").font(.headline)
-            ForEach(["¿Cómo priorizo mis inversiones este trimestre?",
-                     "Tengo un cliente que paga tarde, ¿qué hago?",
-                     "Ayúdame a preparar la reunión con el banco",
-                     "¿Qué KPIs debería vigilar esta semana?"], id: \.self) { s in
+            ForEach(store.nexusConnected
+                    ? ["¿Qué citas tengo esta semana?",
+                       "¿Cuántos partes de trabajo tengo abiertos?",
+                       "¿Cuál es mi próxima cita y dónde es?",
+                       "Resume mi agenda de los próximos días"]
+                    : ["¿Cómo priorizo mis inversiones este trimestre?",
+                       "Tengo un cliente que paga tarde, ¿qué hago?",
+                       "Ayúdame a preparar la reunión con el banco",
+                       "¿Qué KPIs debería vigilar esta semana?"], id: \.self) { s in
                 Button { send(s) } label: {
                     Text(s).frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10)

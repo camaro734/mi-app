@@ -178,18 +178,24 @@ final class NexusService {
         String(data: data, encoding: .utf8) ?? ""
     }
 
-    /// Parsea fechas ISO con o sin zona horaria (el ERP puede devolver ambas).
-    private static func parseDate(_ s: String) -> Date? {
+    /// Parsea fechas ISO con o sin zona horaria. Tolera los microsegundos que
+    /// añade PostgreSQL (p. ej. "2026-06-28T10:00:00.123456"), que de otro modo
+    /// romperían el lector y harían que las citas se descartaran en silencio.
+    private static func parseDate(_ raw: String) -> Date? {
+        // Quitar la fracción de segundos (".123456"); conserva una posible zona.
+        let s = raw.replacingOccurrences(
+            of: #"\.\d+"#, with: "", options: .regularExpression)
+
         let iso = ISO8601DateFormatter()
-        iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let d = iso.date(from: s) { return d }
         iso.formatOptions = [.withInternetDateTime]
-        if let d = iso.date(from: s) { return d }
-        // Sin zona horaria: "2026-06-28T10:00:00" → se interpreta como hora local.
+        if let d = iso.date(from: s) { return d }   // con zona horaria (…+02:00 / Z)
+
+        // Sin zona horaria → se interpreta como hora local.
         let df = DateFormatter()
         df.locale = Locale(identifier: "en_US_POSIX")
         df.timeZone = .current
-        for fmt in ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm"] {
+        for fmt in ["yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm",
+                    "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd"] {
             df.dateFormat = fmt
             if let d = df.date(from: s) { return d }
         }

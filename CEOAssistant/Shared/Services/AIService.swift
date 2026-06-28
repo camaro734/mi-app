@@ -2,10 +2,18 @@ import Foundation
 
 /// Abstracción del motor de IA para poder cambiar de proveedor sin tocar la UI.
 protocol AIService {
-    /// Conversación de asesoría: devuelve la respuesta del asistente.
-    func reply(to messages: [AdviceMessage]) async throws -> String
+    /// Conversación de asesoría. `context` opcional se añade al prompt del
+    /// sistema (p. ej. datos en vivo del ERP: citas y partes reales).
+    func reply(to messages: [AdviceMessage], context: String?) async throws -> String
     /// Texto -> texto crudo (usado para resúmenes/briefings que devuelven JSON).
     func complete(system: String?, user: String) async throws -> String
+}
+
+extension AIService {
+    /// Versión sin contexto extra (compatibilidad con llamadas existentes).
+    func reply(to messages: [AdviceMessage]) async throws -> String {
+        try await reply(to: messages, context: nil)
+    }
 }
 
 enum AIError: LocalizedError {
@@ -45,11 +53,24 @@ final class ClaudeAIService: AIService {
         self.session = session
     }
 
-    func reply(to messages: [AdviceMessage]) async throws -> String {
+    func reply(to messages: [AdviceMessage], context: String?) async throws -> String {
         let payloadMessages = messages.map {
             ["role": $0.role.rawValue, "content": $0.content]
         }
-        return try await send(system: Prompts.ceoAdvisorSystem,
+        var system = Prompts.ceoAdvisorSystem
+        if let context, !context.isEmpty {
+            system += """
+
+
+            # Datos en vivo de la empresa (ERP Nexus)
+            \(context)
+
+            Usa estos datos REALES cuando el CEO pregunte por su agenda, sus citas \
+            o sus partes de trabajo. No inventes nada que no esté aquí; si falta un \
+            dato, dilo en una frase.
+            """
+        }
+        return try await send(system: system,
                               messages: payloadMessages,
                               maxTokens: 1024)
     }

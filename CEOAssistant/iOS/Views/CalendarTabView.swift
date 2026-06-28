@@ -18,7 +18,9 @@ struct CalendarTabView: View {
                 if store.appointments.isEmpty {
                     ContentUnavailableView("Sin citas próximas",
                         systemImage: "calendar",
-                        description: Text("Concede acceso al calendario en Ajustes para verlas aquí."))
+                        description: Text(store.nexusConnected
+                            ? "No hay citas en los próximos 7 días en Nexus. Desliza hacia abajo para actualizar."
+                            : "Conéctate a Nexus en Ajustes para ver la agenda real de la empresa."))
                 }
                 ForEach(grouped, id: \.day) { group in
                     Section(group.day.formatted(.dateTime.weekday(.wide).day().month())) {
