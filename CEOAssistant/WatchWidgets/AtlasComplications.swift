@@ -106,9 +106,67 @@ struct NextAppointmentComplication: Widget {
     }
 }
 
+// MARK: - Complicación "Grabar reunión" (acceso rápido desde la esfera)
+
+struct RecordEntry: TimelineEntry { let date: Date }
+
+struct RecordProvider: TimelineProvider {
+    func placeholder(in context: Context) -> RecordEntry { RecordEntry(date: Date()) }
+    func getSnapshot(in context: Context, completion: @escaping (RecordEntry) -> Void) {
+        completion(RecordEntry(date: Date()))
+    }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<RecordEntry>) -> Void) {
+        completion(Timeline(entries: [RecordEntry(date: Date())], policy: .never))
+    }
+}
+
+struct RecordComplicationView: View {
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        switch family {
+        case .accessoryInline:
+            Label("Grabar", systemImage: "mic.fill")
+
+        case .accessoryCircular:
+            ZStack {
+                AccessoryWidgetBackground()
+                Image(systemName: "mic.fill").font(.system(size: 18, weight: .semibold))
+            }
+
+        case .accessoryCorner:
+            Image(systemName: "mic.fill").font(.title3).widgetLabel("Grabar")
+
+        default: // .accessoryRectangular
+            HStack(spacing: 6) {
+                Image(systemName: "mic.fill").font(.title3)
+                Text("Grabar reunión").font(.headline)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+struct RecordMeetingComplication: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: "AtlasRecordMeeting",
+                            provider: RecordProvider()) { _ in
+            RecordComplicationView()
+                .widgetURL(URL(string: "atlas://record"))
+        }
+        .configurationDisplayName("Grabar reunión")
+        .description("Un toque en la esfera para empezar a grabar una reunión.")
+        .supportedFamilies([
+            .accessoryInline, .accessoryCircular,
+            .accessoryRectangular, .accessoryCorner
+        ])
+    }
+}
+
 @main
 struct AtlasComplications: WidgetBundle {
     var body: some Widget {
+        RecordMeetingComplication()
         NextAppointmentComplication()
     }
 }

@@ -2,8 +2,13 @@ import SwiftUI
 
 /// Graba una reunión desde el Watch y la transfiere al iPhone para procesarla.
 struct WatchRecordView: View {
+    /// Si es true (al abrir desde la complicación de la esfera), empieza a
+    /// grabar automáticamente para que sea un solo toque.
+    var autoStart: Bool = false
+
     @StateObject private var recorder = AudioRecorder()
     @State private var transferred = false
+    @State private var didAutoStart = false
 
     var body: some View {
         VStack(spacing: 14) {
@@ -34,6 +39,13 @@ struct WatchRecordView: View {
             }
         }
         .navigationTitle("Grabar")
+        .task {
+            // Abierto desde la complicación de la esfera: empieza a grabar solo.
+            if autoStart && !didAutoStart && !recorder.isRecording && !transferred {
+                didAutoStart = true
+                startRecording()
+            }
+        }
     }
 
     private func toggle() {
@@ -47,10 +59,14 @@ struct WatchRecordView: View {
                 withAnimation { transferred = true }
             }
         } else {
-            Task {
-                guard await recorder.requestPermission() else { return }
-                try? recorder.start()
-            }
+            startRecording()
+        }
+    }
+
+    private func startRecording() {
+        Task {
+            guard await recorder.requestPermission() else { return }
+            try? recorder.start()
         }
     }
 }

@@ -23,6 +23,19 @@
     <key>WKCompanionAppBundleIdentifier</key>
     <string>com.cmghidraulica.ceoassistant</string>
 
+    <!-- Esquema de URL para abrir desde la complicación de la esfera -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.cmghidraulica.ceoassistant.atlas</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>atlas</string>
+            </array>
+        </dict>
+    </array>
+
     <!-- Permisos -->
     <key>NSMicrophoneUsageDescription</key>
     <string>Atlas usa el micrófono para grabar reuniones y dictar notas desde el reloj.</string>
