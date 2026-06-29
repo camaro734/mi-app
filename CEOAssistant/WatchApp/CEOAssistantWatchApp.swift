@@ -2,6 +2,12 @@ import SwiftUI
 
 @main
 struct CEOAssistantWatchApp: App {
+    init() {
+        // Activa la sesión con el iPhone ya al arrancar, para que esté lista
+        // antes de grabar y no se pierda la primera transferencia de audio.
+        WatchConnectivityManager.shared.activate()
+    }
+
     var body: some Scene {
         WindowGroup {
             WatchRootView()

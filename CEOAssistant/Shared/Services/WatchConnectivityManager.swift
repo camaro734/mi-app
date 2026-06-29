@@ -17,6 +17,9 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
 
     @Published var isReachable = false
 
+    /// Audios pendientes de enviar mientras la sesión termina de activarse.
+    private var pendingAudio: [(URL, [String: Any])] = []
+
     private override init() {
         super.init()
         guard WCSession.isSupported() else { return }
@@ -24,12 +27,38 @@ final class WatchConnectivityManager: NSObject, ObservableObject {
         WCSession.default.activate()
     }
 
+    /// Fuerza la activación (llámalo al arrancar la app del Watch para que la
+    /// sesión esté lista antes de grabar y no se pierda el primer envío).
+    func activate() {
+        guard WCSession.isSupported() else { return }
+        if WCSession.default.activationState != .activated {
+            WCSession.default.activate()
+        }
+    }
+
     // MARK: Envío
 
-    /// Transfiere un fichero de audio (desde el Watch) con metadatos.
+    /// Transfiere un fichero de audio (desde el Watch) con metadatos. Si la
+    /// sesión aún no está activa, lo encola y lo manda al activarse (antes se
+    /// perdía el primer envío porque la activación es asíncrona).
     func sendAudio(fileURL: URL, metadata: [String: Any]) {
-        guard WCSession.default.activationState == .activated else { return }
-        WCSession.default.transferFile(fileURL, metadata: metadata)
+        let session = WCSession.default
+        if session.activationState == .activated {
+            session.transferFile(fileURL, metadata: metadata)
+        } else {
+            pendingAudio.append((fileURL, metadata))
+            session.activate()
+        }
+    }
+
+    /// Envía los audios que quedaron pendientes por la activación.
+    private func flushPendingAudio() {
+        guard WCSession.default.activationState == .activated, !pendingAudio.isEmpty else { return }
+        let queued = pendingAudio
+        pendingAudio.removeAll()
+        for (url, meta) in queued {
+            WCSession.default.transferFile(url, metadata: meta)
+        }
     }
 
     /// Desde el Watch: pregunta al asesor (la respuesta la calcula el iPhone).
@@ -66,7 +95,10 @@ extension WatchConnectivityManager: WCSessionDelegate {
     func session(_ session: WCSession,
                  activationDidCompleteWith state: WCSessionActivationState,
                  error: Error?) {
-        DispatchQueue.main.async { self.isReachable = session.isReachable }
+        DispatchQueue.main.async {
+            self.isReachable = session.isReachable
+            self.flushPendingAudio()
+        }
     }
 
     #if os(iOS)
