@@ -37,10 +37,10 @@ final class AppleSpeechTranscriber: TranscriptionService {
               recognizer.isAvailable else {
             throw TranscriptionError.engineUnavailable("Reconocedor no disponible para \(locale.identifier).")
         }
-        recognizer.supportsOnDeviceRecognition = true
-
         let request = SFSpeechURLRecognitionRequest(url: fileURL)
-        request.requiresOnDeviceRecognition = true
+        // Privado y sin red si el modelo en español está en el dispositivo; si
+        // no, se usa el reconocimiento por servidor en lugar de fallar.
+        request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
         request.shouldReportPartialResults = false
 
         return try await withCheckedThrowingContinuation { continuation in

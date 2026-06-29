@@ -52,6 +52,7 @@ final class AssistantStore: ObservableObject {
     /// Procesa una grabación completa. Pensado para ejecutarse en el iPhone.
     func process(recording: Recording, audioURL: URL) async {
         var rec = recording
+        rec.errorText = nil
         upsert(rec)
         do {
             // 1) Transcribir
@@ -77,6 +78,7 @@ final class AssistantStore: ObservableObject {
             statusMessage = "Resumen listo."
         } catch {
             rec.status = .failed
+            rec.errorText = error.localizedDescription
             upsert(rec)
             statusMessage = "Error: \(error.localizedDescription)"
         }

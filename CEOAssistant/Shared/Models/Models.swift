@@ -24,6 +24,8 @@ struct Recording: Identifiable, Codable, Hashable {
     var transcript: String?
     var summary: MeetingSummary?
     var status: Status
+    /// Si el procesado falló, el motivo concreto (para mostrarlo en la app).
+    var errorText: String? = nil
 
     init(id: UUID = UUID(),
          title: String = "Reunión sin título",

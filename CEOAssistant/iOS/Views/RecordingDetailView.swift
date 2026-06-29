@@ -46,7 +46,7 @@ struct RecordingDetailView: View {
                 } else if recording.status == .failed {
                     ContentUnavailableView("No se pudo procesar",
                         systemImage: "exclamationmark.triangle",
-                        description: Text("Revisa la API key o la conexión e inténtalo de nuevo."))
+                        description: Text(recording.errorText ?? "Revisa la API key o la conexión e inténtalo de nuevo."))
                 } else {
                     ProgressView("Procesando…").frame(maxWidth: .infinity)
                 }
