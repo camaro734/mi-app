@@ -9,6 +9,8 @@ final class AssistantStore: ObservableObject {
     // MARK: Estado publicado
     @Published var recordings: [Recording] = []
     @Published var appointments: [Appointment] = []
+    @Published var workOrders: [NexusWorkOrder] = []
+    @Published var kpis: NexusKPIs?
     @Published var conversation: [AdviceMessage] = []
     @Published var notes: [QuickNote] = []
     @Published var todayBriefing: DailyBriefing?
@@ -174,6 +176,7 @@ final class AssistantStore: ObservableObject {
             nexusConnected = true
             statusMessage = "Conectado a Nexus."
             await refreshCalendar()
+            await loadCompanyData()
             return true
         } catch {
             statusMessage = error.localizedDescription
@@ -186,6 +189,8 @@ final class AssistantStore: ObservableObject {
     func disconnectNexus() {
         NexusService.logout()
         nexusConnected = false
+        workOrders = []
+        kpis = nil
         Task { await refreshCalendar() }
     }
 
@@ -203,8 +208,18 @@ final class AssistantStore: ObservableObject {
         }
     }
 
-    /// Contexto en vivo (citas + partes de Nexus) que se añade al prompt del
-    /// Asesor para que pueda responder con datos reales de la empresa.
+    /// Carga partes de trabajo y KPIs de Nexus en memoria (vistas "Empresa").
+    func loadCompanyData() async {
+        guard NexusService.isLoggedIn else {
+            workOrders = []; kpis = nil; return
+        }
+        if let wo = try? await nexus.workOrders(limit: 50) { workOrders = wo }
+        // Los KPIs solo los ve dirección; si no, queda nil sin molestar.
+        kpis = try? await nexus.kpis()
+    }
+
+    /// Contexto en vivo (citas + partes + finanzas de Nexus) que se añade al
+    /// prompt del Asesor para que responda con datos reales de la empresa.
     private func companyContextForAdvisor() async -> String? {
         guard NexusService.isLoggedIn else { return nil }
         var blocks: [String] = []
@@ -226,18 +241,35 @@ final class AssistantStore: ObservableObject {
             blocks.append("## Próximas citas (7 días)\n" + lines.joined(separator: "\n"))
         }
 
-        // Partes de trabajo activos (no incluye citas).
-        if let partes = try? await nexus.workOrders(limit: 30), !partes.isEmpty {
-            let lines = partes.prefix(20).map { p -> String in
-                let num = p["order_number"] as? String ?? "—"
-                let cli = p["customer_name"] as? String ?? ""
-                let est = p["status"] as? String ?? ""
-                return "- \(num) · \(cli) · \(est)"
+        // Partes de trabajo y finanzas.
+        await loadCompanyData()
+        if !workOrders.isEmpty {
+            let lines = workOrders.prefix(25).map { w -> String in
+                "- \(w.orderNumber ?? "—") · \(w.customerName ?? "") · \(w.status ?? "")"
             }
-            blocks.append("## Partes de trabajo activos (\(partes.count))\n" + lines.joined(separator: "\n"))
+            blocks.append("## Partes de trabajo activos (\(workOrders.count))\n" + lines.joined(separator: "\n"))
+        }
+        if let k = kpis {
+            blocks.append("""
+            ## Finanzas \(k.anio)
+            - Ventas: \(Self.eur(k.ventas)) (año anterior \(Self.eur(k.ventasAnterior)), crecimiento \(k.crecimientoPct)%)
+            - Compras: \(Self.eur(k.compras)) · Nóminas: \(Self.eur(k.nominas))
+            - Beneficio: \(Self.eur(k.beneficio)) (margen \(k.margenPct)%)
+            - Pendiente de cobro: \(Self.eur(k.porCobrar)) · Pendiente de pago: \(Self.eur(k.porPagar))
+            """)
         }
 
         return blocks.isEmpty ? nil : blocks.joined(separator: "\n\n")
+    }
+
+    /// Formatea un importe en euros para textos del Asesor y vistas.
+    static func eur(_ value: Double) -> String {
+        let f = NumberFormatter()
+        f.numberStyle = .currency
+        f.currencyCode = "EUR"
+        f.locale = Locale(identifier: "es_ES")
+        f.maximumFractionDigits = 0
+        return f.string(from: NSNumber(value: value)) ?? "\(Int(value)) €"
     }
 
     // MARK: - Briefing diario

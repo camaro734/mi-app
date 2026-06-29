@@ -41,8 +41,8 @@ struct AdvisorView: View {
             ForEach(store.nexusConnected
                     ? ["¿Qué citas tengo esta semana?",
                        "¿Cuántos partes de trabajo tengo abiertos?",
-                       "¿Cuál es mi próxima cita y dónde es?",
-                       "Resume mi agenda de los próximos días"]
+                       "¿Cómo van las ventas y el beneficio este año?",
+                       "¿Cuánto tengo pendiente de cobro?"]
                     : ["¿Cómo priorizo mis inversiones este trimestre?",
                        "Tengo un cliente que paga tarde, ¿qué hago?",
                        "Ayúdame a preparar la reunión con el banco",

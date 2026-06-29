@@ -123,6 +123,57 @@ struct Appointment: Identifiable, Codable, Hashable {
     }
 }
 
+// MARK: - Nexus (ERP): partes de trabajo y KPIs
+
+/// Un parte de trabajo del taller (work order) de `/api/v1/work-orders`.
+struct NexusWorkOrder: Identifiable, Codable, Hashable {
+    let id: Int
+    var orderNumber: String?
+    var status: String?
+    var priority: String?
+    var customerName: String?
+    var vehiclePlate: String?
+    var workDescription: String?
+    var total: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case orderNumber = "order_number"
+        case status, priority
+        case customerName = "customer_name"
+        case vehiclePlate = "vehicle_plate"
+        case workDescription = "work_description"
+        case total
+    }
+}
+
+struct NexusWorkOrdersResponse: Codable {
+    let items: [NexusWorkOrder]
+}
+
+/// KPIs financieros de la empresa (`/api/v1/kpis`).
+struct NexusKPIs: Codable, Hashable {
+    let anio: Int
+    let ventas: Double
+    let compras: Double
+    let nominas: Double
+    let beneficio: Double
+    let margenPct: Double
+    let crecimientoPct: Double
+    let ventasAnterior: Double
+    let porCobrar: Double
+    let porPagar: Double
+
+    enum CodingKeys: String, CodingKey {
+        case anio, ventas, compras, nominas, beneficio
+        case margenPct = "margen_pct"
+        case crecimientoPct = "crecimiento_pct"
+        case ventasAnterior = "ventas_anterior"
+        case porCobrar = "por_cobrar"
+        case porPagar = "por_pagar"
+    }
+}
+
 // MARK: - Asesor de CEO (chat)
 
 struct AdviceMessage: Identifiable, Codable, Hashable {

@@ -97,16 +97,22 @@ final class NexusService {
         return items.compactMap(Self.appointment(from:))
     }
 
-    /// Partes de trabajo activos (no incluye citas). Devuelve los datos en bruto
-    /// para que la capa superior los muestre como prefiera.
-    func workOrders(limit: Int = 50) async throws -> [[String: Any]] {
-        let payload: [String: Any] = try await getJSON("/api/v1/work-orders?limit=\(limit)")
-        return payload["items"] as? [[String: Any]] ?? []
+    /// Partes de trabajo activos (no incluye citas).
+    func workOrders(limit: Int = 50) async throws -> [NexusWorkOrder] {
+        let data = try await getData("/api/v1/work-orders?limit=\(limit)")
+        return try JSONDecoder().decode(NexusWorkOrdersResponse.self, from: data).items
+    }
+
+    /// KPIs financieros de la empresa (solo dirección). Año opcional.
+    func kpis(anio: Int? = nil) async throws -> NexusKPIs {
+        let path = anio.map { "/api/v1/kpis?anio=\($0)" } ?? "/api/v1/kpis"
+        let data = try await getData(path)
+        return try JSONDecoder().decode(NexusKPIs.self, from: data)
     }
 
     // MARK: - HTTP con token (refresca y reintenta una vez si caduca)
 
-    private func getJSON(_ path: String, retrying: Bool = true) async throws -> [String: Any] {
+    private func getData(_ path: String, retrying: Bool = true) async throws -> Data {
         guard let token = SecureStore.get(.nexusAccessToken), !token.isEmpty else {
             throw NexusError.notLoggedIn
         }
@@ -121,11 +127,17 @@ final class NexusService {
         if http.statusCode == 401 && retrying {
             // Token caducado: refrescar y reintentar una sola vez.
             _ = try await refreshAccessToken()
-            return try await getJSON(path, retrying: false)
+            return try await getData(path, retrying: false)
         }
+        if http.statusCode == 403 { throw NexusError.forbidden }
         guard (200...299).contains(http.statusCode) else {
             throw NexusError.badResponse(http.statusCode, bodyText(data))
         }
+        return data
+    }
+
+    private func getJSON(_ path: String) async throws -> [String: Any] {
+        let data = try await getData(path)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw NexusError.decoding("Respuesta inesperada de \(path).")
         }
@@ -208,6 +220,7 @@ enum NexusError: LocalizedError {
     case notLoggedIn
     case badCredentials
     case sessionExpired
+    case forbidden
     case network(String)
     case badResponse(Int, String)
     case decoding(String)
@@ -217,6 +230,7 @@ enum NexusError: LocalizedError {
         case .notLoggedIn:    return "No has iniciado sesión en Nexus."
         case .badCredentials: return "Usuario o contraseña de Nexus incorrectos."
         case .sessionExpired: return "La sesión de Nexus caducó. Vuelve a iniciar sesión."
+        case .forbidden:      return "Tu usuario de Nexus no tiene permiso para ver estos datos."
         case .network(let m): return m
         case .badResponse(let code, _): return "Nexus respondió con un error (\(code))."
         case .decoding(let m): return m

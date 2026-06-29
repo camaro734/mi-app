@@ -30,8 +30,8 @@ struct ContentView: View {
                 .tabItem { Label("Reuniones", systemImage: "waveform") }.tag(1)
             AdvisorView()
                 .tabItem { Label("Asesor", systemImage: "brain.head.profile") }.tag(2)
-            CalendarTabView()
-                .tabItem { Label("Agenda", systemImage: "calendar") }.tag(3)
+            CompanyHubView()
+                .tabItem { Label("Empresa", systemImage: "building.2.fill") }.tag(3)
             SettingsView()
                 .tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(4)
         }
