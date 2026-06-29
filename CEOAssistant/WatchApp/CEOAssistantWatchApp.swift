@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 @main
 struct CEOAssistantWatchApp: App {
@@ -6,6 +7,8 @@ struct CEOAssistantWatchApp: App {
         // Activa la sesión con el iPhone ya al arrancar, para que esté lista
         // antes de grabar y no se pierda la primera transferencia de audio.
         WatchConnectivityManager.shared.activate()
+        // Refresca las complicaciones de la esfera.
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     var body: some Scene {
@@ -18,7 +21,7 @@ struct CEOAssistantWatchApp: App {
 /// Raíz del Watch: navegación vertical entre las acciones principales del CEO
 /// en la muñeca — grabar, dictar, asesor y próxima cita.
 struct WatchRootView: View {
-    @State private var recordFromComplication = false
+    @State private var showRecord = false
 
     var body: some View {
         NavigationStack {
@@ -40,13 +43,16 @@ struct WatchRootView: View {
                 } label: { Label("Próxima cita", systemImage: "calendar") }
             }
             .navigationTitle("Atlas")
-            // Abre directamente en grabar (y empieza) al tocar la complicación.
-            .navigationDestination(isPresented: $recordFromComplication) {
+        }
+        // Al tocar la complicación de la esfera (atlas://record) se abre esta
+        // hoja directamente en grabar y empieza a grabar sola.
+        .onOpenURL { url in
+            if url.scheme == "atlas" { showRecord = true }
+        }
+        .sheet(isPresented: $showRecord) {
+            NavigationStack {
                 WatchRecordView(autoStart: true)
             }
-        }
-        .onOpenURL { url in
-            if url.host == "record" { recordFromComplication = true }
         }
     }
 }
