@@ -43,13 +43,19 @@ final class AudioRecorder: NSObject, ObservableObject {
         let url = Self.recordingsDirectory.appendingPathComponent(fileName)
         let settings: [String: Any] = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 16_000,        // suficiente para voz; ficheros pequeños
+            // 44.1 kHz: tasa nativa fiable también en el micro del Apple Watch
+            // (a 16 kHz algunas veces grababa en silencio).
+            AVSampleRateKey: 44_100,
             AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
         let rec = try AVAudioRecorder(url: url, settings: settings)
         rec.isMeteringEnabled = true
-        rec.record()
+        rec.prepareToRecord()
+        guard rec.record() else {
+            throw NSError(domain: "AudioRecorder", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "No se pudo iniciar el micrófono."])
+        }
 
         recorder = rec
         currentFileURL = url

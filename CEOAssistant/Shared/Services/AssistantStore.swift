@@ -78,9 +78,14 @@ final class AssistantStore: ObservableObject {
             statusMessage = "Resumen listo."
         } catch {
             rec.status = .failed
-            rec.errorText = error.localizedDescription
+            var reason = error.localizedDescription
+            if let attrs = try? FileManager.default.attributesOfItem(atPath: audioURL.path),
+               let size = attrs[.size] as? Int {
+                reason += "  ·  audio recibido: \(size / 1024) KB"
+            }
+            rec.errorText = reason
             upsert(rec)
-            statusMessage = "Error: \(error.localizedDescription)"
+            statusMessage = "Error: \(reason)"
         }
     }
 
