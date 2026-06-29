@@ -126,21 +126,30 @@ struct RecordComplicationView: View {
     var body: some View {
         switch family {
         case .accessoryInline:
-            Label("Grabar", systemImage: "mic.fill")
+            Label("Grabar reunión", systemImage: "mic.fill")
 
         case .accessoryCircular:
-            ZStack {
-                AccessoryWidgetBackground()
-                Image(systemName: "mic.fill").font(.system(size: 18, weight: .semibold))
-            }
+            // Icono relleno que ocupa todo el círculo: se ve como un botón claro.
+            Image(systemName: "mic.circle.fill")
+                .resizable()
+                .scaledToFit()
+                .padding(1)
+                .widgetAccentable()
 
         case .accessoryCorner:
-            Image(systemName: "mic.fill").font(.title3).widgetLabel("Grabar")
+            Image(systemName: "mic.circle.fill")
+                .resizable().scaledToFit()
+                .widgetAccentable()
+                .widgetLabel("Grabar")
 
         default: // .accessoryRectangular
-            HStack(spacing: 6) {
-                Image(systemName: "mic.fill").font(.title3)
+            HStack(spacing: 8) {
+                Image(systemName: "mic.circle.fill")
+                    .resizable().scaledToFit()
+                    .frame(width: 26, height: 26)
+                    .widgetAccentable()
                 Text("Grabar reunión").font(.headline)
+                Spacer(minLength: 0)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
