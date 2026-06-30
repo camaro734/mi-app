@@ -176,6 +176,35 @@ struct NexusKPIs: Codable, Hashable {
     }
 }
 
+// MARK: - Correo
+
+/// Un correo recibido, con resumen de IA opcional.
+struct EmailMessage: Identifiable, Hashable {
+    let id: String          // UID del mensaje en el servidor
+    var from: String
+    var to: String
+    var subject: String
+    var dateText: String
+    var body: String
+    var summary: String?    // resumen generado por la IA (perezoso)
+
+    /// Dirección de correo "limpia" del remitente (sin el nombre).
+    var fromAddress: String {
+        if let lt = from.firstIndex(of: "<"), let gt = from.firstIndex(of: ">"), lt < gt {
+            return String(from[from.index(after: lt)..<gt]).trimmingCharacters(in: .whitespaces)
+        }
+        return from.trimmingCharacters(in: .whitespaces)
+    }
+
+    var fromName: String {
+        if let lt = from.firstIndex(of: "<") {
+            let name = String(from[..<lt]).trimmingCharacters(in: .whitespaces)
+            return name.isEmpty ? fromAddress : name.replacingOccurrences(of: "\"", with: "")
+        }
+        return fromAddress
+    }
+}
+
 // MARK: - Asesor de CEO (chat)
 
 struct AdviceMessage: Identifiable, Codable, Hashable {

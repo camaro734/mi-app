@@ -10,6 +10,11 @@ struct SettingsView: View {
         TranscriptionEngine.appleOnDevice.rawValue
     @AppStorage(AppConfig.Keys.nexusUsername) private var nexusUsername = ""
     @AppStorage(AppConfig.Keys.nexusBaseURL) private var nexusURL = "https://cmgnexus.es"
+    @AppStorage(AppConfig.Keys.mailHost) private var mailHost = "mail.cmghidraulica.com"
+    @AppStorage(AppConfig.Keys.mailUser) private var mailUser = ""
+    @AppStorage(AppConfig.Keys.mailFromName) private var mailFromName = ""
+    @AppStorage(AppConfig.Keys.mailIMAPPort) private var mailIMAPPort = 993
+    @AppStorage(AppConfig.Keys.mailSMTPPort) private var mailSMTPPort = 465
 
     @State private var anthropicKey = SecureStore.get(.anthropicAPIKey) ?? ""
     @State private var openAIKey = SecureStore.get(.openAIAPIKey) ?? ""
@@ -17,6 +22,7 @@ struct SettingsView: View {
     @State private var nexusConnecting = false
     @State private var nexusTestResult: String?
     @State private var nexusTesting = false
+    @State private var mailPassword = SecureStore.get(.mailPassword) ?? ""
     @State private var savedFlash = false
 
     var body: some View {
@@ -93,6 +99,26 @@ struct SettingsView: View {
                     Text("Inicia sesión con tu usuario de Nexus para que Atlas use la agenda real de citas de la empresa. Solo se guarda un token cifrado, nunca tu contraseña.")
                 }
 
+                Section {
+                    TextField("Tu correo (carlos@cmghidraulica.com)", text: $mailUser)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    SecureField("Contraseña del correo", text: $mailPassword)
+                    TextField("Tu nombre (remitente)", text: $mailFromName)
+                    DisclosureGroup("Ajustes avanzados") {
+                        TextField("Servidor", text: $mailHost)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        Stepper("Puerto IMAP: \(mailIMAPPort)", value: $mailIMAPPort, in: 1...65535)
+                        Stepper("Puerto SMTP: \(mailSMTPPort)", value: $mailSMTPPort, in: 1...65535)
+                    }
+                } header: {
+                    Text("Correo (leer y responder)")
+                } footer: {
+                    Text("Atlas se conecta por IMAP/SMTP. La contraseña se guarda cifrada solo en este iPhone. Nada se envía sin tu confirmación.")
+                }
+
                 Section("Transcripción") {
                     Picker("Motor", selection: $engineRaw) {
                         ForEach(TranscriptionEngine.allCases) { e in
@@ -131,6 +157,8 @@ struct SettingsView: View {
     private func save() {
         SecureStore.set(anthropicKey.trimmingCharacters(in: .whitespaces), for: .anthropicAPIKey)
         SecureStore.set(openAIKey.trimmingCharacters(in: .whitespaces), for: .openAIAPIKey)
+        SecureStore.set(mailPassword.trimmingCharacters(in: .whitespaces), for: .mailPassword)
+        store.refreshMailConnected()
         withAnimation { savedFlash = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             withAnimation { savedFlash = false }

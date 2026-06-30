@@ -10,6 +10,8 @@ enum SecureStore {
         // Tokens de sesión del ERP Nexus (nunca se guarda la contraseña).
         case nexusAccessToken = "com.cmghidraulica.ceoassistant.nexusAccess"
         case nexusRefreshToken = "com.cmghidraulica.ceoassistant.nexusRefresh"
+        // Contraseña de la cuenta de correo (IMAP/SMTP), cifrada en el Keychain.
+        case mailPassword = "com.cmghidraulica.ceoassistant.mailPassword"
     }
 
     @discardableResult

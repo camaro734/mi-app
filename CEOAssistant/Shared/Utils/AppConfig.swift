@@ -20,6 +20,12 @@ enum AppConfig {
         // Integración con el ERP Nexus (finance-agent).
         static let nexusBaseURL = "config.nexusBaseURL"
         static let nexusUsername = "config.nexusUsername"
+        // Cuenta de correo (IMAP/SMTP) del usuario.
+        static let mailHost = "config.mailHost"
+        static let mailUser = "config.mailUser"
+        static let mailFromName = "config.mailFromName"
+        static let mailIMAPPort = "config.mailIMAPPort"
+        static let mailSMTPPort = "config.mailSMTPPort"
     }
 }
 

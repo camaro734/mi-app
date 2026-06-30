@@ -12,6 +12,10 @@ final class AssistantStore: ObservableObject {
     @Published var appointments: [Appointment] = []
     @Published var workOrders: [NexusWorkOrder] = []
     @Published var kpis: NexusKPIs?
+    @Published var emails: [EmailMessage] = []
+    @Published var mailBusy = false
+    @Published var mailStatus: String?
+    @Published var mailConnected = MailService.isConfigured
     @Published var conversation: [AdviceMessage] = []
     @Published var notes: [QuickNote] = []
     @Published var todayBriefing: DailyBriefing?
@@ -22,6 +26,8 @@ final class AssistantStore: ObservableObject {
     private let ai: AIService
     private let calendar = CalendarService()
     private let nexus = NexusService()
+    private let mail = MailService()
+    private var sentSamplesCache: [String]?
     private lazy var transcriber: TranscriptionService = makeTranscriber()
 
     init(ai: AIService? = nil) {
@@ -273,6 +279,74 @@ final class AssistantStore: ObservableObject {
         }
 
         return blocks.isEmpty ? nil : blocks.joined(separator: "\n\n")
+    }
+
+    // MARK: - Correo (IMAP/SMTP)
+
+    /// Refresca el estado de conexión (tras configurar la cuenta en Ajustes).
+    func refreshMailConnected() { mailConnected = MailService.isConfigured }
+
+    /// Lee la bandeja de entrada y genera un resumen de cada correo.
+    func loadInbox() async {
+        guard MailService.isConfigured else {
+            mailStatus = "Configura tu correo en Ajustes."
+            return
+        }
+        mailBusy = true
+        defer { mailBusy = false }
+        do {
+            emails = try await mail.fetchInbox(count: 15)
+            mailStatus = nil
+            await summarizeInbox()
+        } catch {
+            mailStatus = error.localizedDescription
+        }
+    }
+
+    private func summarizeInbox() async {
+        for e in emails where e.summary == nil && !e.body.isEmpty {
+            let prompt = Prompts.emailSummary(subject: e.subject, from: e.fromName, body: e.body)
+            if let s = try? await ai.complete(system: nil, user: prompt),
+               let idx = emails.firstIndex(where: { $0.id == e.id }) {
+                emails[idx].summary = s.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+    }
+
+    /// Redacta un borrador de respuesta imitando el estilo del usuario.
+    func draftReply(for email: EmailMessage, instructions: String?) async -> String? {
+        mailBusy = true
+        defer { mailBusy = false }
+        if sentSamplesCache == nil {
+            sentSamplesCache = (try? await mail.fetchSentSamples(count: 8)) ?? []
+        }
+        let prompt = Prompts.emailReply(subject: email.subject, from: email.from,
+                                        body: email.body,
+                                        styleSamples: sentSamplesCache ?? [],
+                                        instructions: instructions)
+        do {
+            let draft = try await ai.complete(system: nil, user: prompt)
+            return draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            mailStatus = error.localizedDescription
+            return nil
+        }
+    }
+
+    /// Envía la respuesta (solo se llama tras la aprobación del usuario).
+    func sendReply(to email: EmailMessage, body: String) async -> Bool {
+        mailBusy = true
+        defer { mailBusy = false }
+        let subject = email.subject.lowercased().hasPrefix("re:")
+            ? email.subject : "Re: \(email.subject)"
+        do {
+            try await mail.send(to: [email.fromAddress], subject: subject, body: body)
+            mailStatus = "Respuesta enviada a \(email.fromAddress)."
+            return true
+        } catch {
+            mailStatus = error.localizedDescription
+            return false
+        }
     }
 
     /// Formatea un importe en euros para textos del Asesor y vistas.

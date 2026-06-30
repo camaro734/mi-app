@@ -97,4 +97,55 @@ enum Prompts {
         Dictado: "\(dictation)"
         """
     }
+
+    // MARK: - Correo
+
+    /// Resumen breve de un correo para el CEO.
+    static func emailSummary(subject: String, from: String, body: String) -> String {
+        """
+        Resume este correo para un CEO ocupado en 1-2 frases en español, diciendo \
+        lo esencial y si requiere acción o respuesta. Sin preámbulos ni comillas.
+
+        De: \(from)
+        Asunto: \(subject)
+        Cuerpo:
+        \"\"\"
+        \(body.prefix(4000))
+        \"\"\"
+        """
+    }
+
+    /// Redacta una respuesta imitando el estilo del CEO (sus enviados).
+    static func emailReply(subject: String, from: String, body: String,
+                           styleSamples: [String], instructions: String?) -> String {
+        let samples = styleSamples.isEmpty
+            ? "(No hay ejemplos disponibles; usa un tono profesional y cercano.)"
+            : styleSamples.prefix(6).enumerated()
+                .map { "Ejemplo \($0.offset + 1):\n\($0.element.prefix(800))" }
+                .joined(separator: "\n\n")
+        let extra = instructions.map { "\nInstrucciones del CEO para esta respuesta: \($0)\n" } ?? ""
+        return """
+        Vas a redactar una respuesta a un correo HACIÉNDOTE PASAR POR EL CEO: imita \
+        su tono, longitud, saludos y despedidas a partir de sus correos enviados. \
+        Escribe en español.
+
+        Estilo del CEO (sus correos enviados):
+        \"\"\"
+        \(samples)
+        \"\"\"
+
+        Correo a responder:
+        De: \(from)
+        Asunto: \(subject)
+        Cuerpo:
+        \"\"\"
+        \(body.prefix(4000))
+        \"\"\"
+        \(extra)
+        Devuelve SOLO el texto del cuerpo de la respuesta (sin asunto, sin comillas, \
+        sin explicaciones), con saludo y despedida al estilo del CEO. No inventes \
+        datos concretos (cifras, fechas, compromisos) que no estén en el correo o en \
+        las instrucciones; si falta alguno, márcalo con [completar].
+        """
+    }
 }
