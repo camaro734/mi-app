@@ -82,7 +82,16 @@ actor IMAPClient {
     }
 
     func login(user: String, password: String) async throws {
-        _ = try await command("LOGIN \(quoted(user)) \(quoted(password))")
+        // AUTH PLAIN (SASL-IR): base64("\0" + usuario + "\0" + contraseña).
+        // Más robusto que LOGIN con comillas si la contraseña tiene caracteres
+        // especiales. Si el servidor lo rechaza por sintaxis, se prueba LOGIN.
+        let token = "\u{0}" + user + "\u{0}" + password
+        let b64 = Data(token.utf8).base64EncodedString()
+        do {
+            _ = try await command("AUTHENTICATE PLAIN \(b64)")
+        } catch {
+            _ = try await command("LOGIN \(quoted(user)) \(quoted(password))")
+        }
     }
 
     /// Selecciona una carpeta y devuelve el número de mensajes (EXISTS).
