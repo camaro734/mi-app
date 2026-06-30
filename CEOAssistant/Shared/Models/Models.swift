@@ -205,6 +205,34 @@ struct EmailMessage: Identifiable, Hashable {
     }
 }
 
+// MARK: - WhatsApp (solo lectura, vía puente)
+
+struct WhatsAppChat: Identifiable, Codable, Hashable {
+    var jid: String
+    var name: String
+    var isGroup: Bool
+    var lastTs: Int
+    var lastText: String
+    var count: Int
+    var summary: String? = nil
+    var id: String { jid }
+
+    var lastDate: Date { Date(timeIntervalSince1970: TimeInterval(lastTs)) }
+}
+
+struct WhatsAppChatsResponse: Codable { let items: [WhatsAppChat] }
+
+struct WhatsAppMessage: Codable, Hashable, Identifiable {
+    var fromMe: Bool
+    var name: String
+    var text: String
+    var ts: Int
+    var id: String { "\(ts)-\(fromMe)-\(text.hashValue)" }
+    var date: Date { Date(timeIntervalSince1970: TimeInterval(ts)) }
+}
+
+struct WhatsAppMessagesResponse: Codable { let items: [WhatsAppMessage] }
+
 // MARK: - Asesor de CEO (chat)
 
 struct AdviceMessage: Identifiable, Codable, Hashable {

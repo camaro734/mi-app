@@ -16,6 +16,9 @@ final class AssistantStore: ObservableObject {
     @Published var mailBusy = false
     @Published var mailStatus: String?
     @Published var mailConnected = MailService.isConfigured
+    @Published var waChats: [WhatsAppChat] = []
+    @Published var waBusy = false
+    @Published var waStatus: String?
     @Published var conversation: [AdviceMessage] = []
     @Published var notes: [QuickNote] = []
     @Published var todayBriefing: DailyBriefing?
@@ -346,6 +349,53 @@ final class AssistantStore: ObservableObject {
         } catch {
             mailStatus = error.localizedDescription
             return false
+        }
+    }
+
+    // MARK: - WhatsApp (solo lectura)
+
+    func loadWhatsApp() async {
+        guard NexusService.isLoggedIn else {
+            waStatus = "Conéctate a Nexus en Ajustes para ver WhatsApp."
+            return
+        }
+        waBusy = true
+        defer { waBusy = false }
+        do {
+            waChats = try await nexus.whatsappChats(limit: 25)
+            waStatus = waChats.isEmpty ? "Aún no hay conversaciones (o el puente no está conectado)." : nil
+        } catch {
+            waStatus = error.localizedDescription
+        }
+    }
+
+    func whatsappConversation(for chat: WhatsAppChat) async -> [WhatsAppMessage] {
+        (try? await nexus.whatsappMessages(jid: chat.jid, limit: 50)) ?? []
+    }
+
+    /// Texto plano de la conversación para los prompts ("Yo" = mensajes del CEO).
+    private func conversationText(_ chat: WhatsAppChat, _ messages: [WhatsAppMessage]) -> String {
+        messages.map { ($0.fromMe ? "Yo" : (chat.name)) + ": " + $0.text }
+                .joined(separator: "\n")
+    }
+
+    func summarizeWhatsApp(chat: WhatsAppChat, messages: [WhatsAppMessage]) async -> String? {
+        guard !messages.isEmpty else { return nil }
+        let convo = conversationText(chat, messages)
+        let prompt = Prompts.whatsappSummary(name: chat.name, conversation: convo)
+        let s = try? await ai.complete(system: nil, user: prompt)
+        return s?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    func draftWhatsAppReply(chat: WhatsAppChat, messages: [WhatsAppMessage],
+                            instructions: String?) async -> String? {
+        let convo = conversationText(chat, messages)
+        let prompt = Prompts.whatsappReply(name: chat.name, conversation: convo, instructions: instructions)
+        do {
+            return try await ai.complete(system: nil, user: prompt).trimmingCharacters(in: .whitespacesAndNewlines)
+        } catch {
+            waStatus = error.localizedDescription
+            return nil
         }
     }
 

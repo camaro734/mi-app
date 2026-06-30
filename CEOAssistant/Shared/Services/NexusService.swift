@@ -110,6 +110,19 @@ final class NexusService {
         return try JSONDecoder().decode(NexusKPIs.self, from: data)
     }
 
+    /// Conversaciones recientes del WhatsApp del CEO (vía puente).
+    func whatsappChats(limit: Int = 25) async throws -> [WhatsAppChat] {
+        let data = try await getData("/api/v1/whatsapp/chats?limit=\(limit)")
+        return try JSONDecoder().decode(WhatsAppChatsResponse.self, from: data).items
+    }
+
+    /// Mensajes de una conversación de WhatsApp.
+    func whatsappMessages(jid: String, limit: Int = 50) async throws -> [WhatsAppMessage] {
+        let q = jid.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? jid
+        let data = try await getData("/api/v1/whatsapp/messages?jid=\(q)&limit=\(limit)")
+        return try JSONDecoder().decode(WhatsAppMessagesResponse.self, from: data).items
+    }
+
     // MARK: - HTTP con token (refresca y reintenta una vez si caduca)
 
     private func getData(_ path: String, retrying: Bool = true) async throws -> Data {

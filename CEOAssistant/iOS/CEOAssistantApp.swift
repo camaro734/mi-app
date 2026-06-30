@@ -26,8 +26,8 @@ struct ContentView: View {
         TabView(selection: $selection) {
             HomeBriefingView(selection: $selection)
                 .tabItem { Label("Hoy", systemImage: "sun.max.fill") }.tag(0)
-            MailView()
-                .tabItem { Label("Correo", systemImage: "envelope.fill") }.tag(1)
+            MessagesHubView()
+                .tabItem { Label("Mensajes", systemImage: "message.fill") }.tag(1)
             AdvisorView()
                 .tabItem { Label("Asesor", systemImage: "brain.head.profile") }.tag(2)
             RecordingsView()

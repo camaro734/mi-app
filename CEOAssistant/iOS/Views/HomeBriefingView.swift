@@ -56,7 +56,7 @@ struct HomeBriefingView: View {
         var body: some View {
             LazyVGrid(columns: cols, spacing: 10) {
                 tile("Grabar", "mic.fill", .red, 3)
-                tile("Correo", "envelope.fill", .blue, 1)
+                tile("Mensajes", "message.fill", .blue, 1)
                 tile("Asesor", "brain.head.profile", .indigo, 2)
                 tile("Empresa", "building.2.fill", .teal, 4)
             }

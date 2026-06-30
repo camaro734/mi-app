@@ -148,4 +148,38 @@ enum Prompts {
         las instrucciones; si falta alguno, márcalo con [completar].
         """
     }
+
+    // MARK: - WhatsApp
+
+    static func whatsappSummary(name: String, conversation: String) -> String {
+        """
+        Resume para un CEO ocupado esta conversación de WhatsApp con "\(name)" en \
+        1-2 frases en español: de qué va y si requiere respuesta o acción. Sin \
+        preámbulos ni comillas.
+
+        Conversación (más antiguo arriba; "Yo" son los mensajes del CEO):
+        \"\"\"
+        \(conversation.suffix(3500))
+        \"\"\"
+        """
+    }
+
+    static func whatsappReply(name: String, conversation: String, instructions: String?) -> String {
+        let extra = instructions.map { "\nInstrucciones del CEO para esta respuesta: \($0)\n" } ?? ""
+        return """
+        Redacta el siguiente mensaje de WhatsApp HACIÉNDOTE PASAR POR EL CEO, para \
+        responder a "\(name)". Imita su tono y su forma de escribir por WhatsApp a \
+        partir de sus propios mensajes (los que aparecen como "Yo"): mismo registro, \
+        longitud y cercanía. Español, natural, como un WhatsApp (breve).
+
+        Conversación (más antiguo arriba; "Yo" son los mensajes del CEO):
+        \"\"\"
+        \(conversation.suffix(3500))
+        \"\"\"
+        \(extra)
+        Devuelve SOLO el texto del mensaje (sin comillas ni explicaciones). No \
+        inventes datos concretos que no estén en la conversación o en las \
+        instrucciones; si falta alguno, márcalo con [completar].
+        """
+    }
 }

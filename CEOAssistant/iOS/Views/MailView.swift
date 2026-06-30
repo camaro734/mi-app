@@ -1,47 +1,35 @@
 import SwiftUI
 
-/// Bandeja de entrada: lista de correos con resumen de IA. Al abrir uno, se
-/// puede generar una respuesta con el estilo del usuario y enviarla SOLO tras
-/// confirmarla explícitamente.
-struct MailView: View {
+/// Bandeja de correo (vista interna, sin barra de navegación propia: la pone el
+/// contenedor "Mensajes"). Lista de correos con resumen de IA; al abrir uno se
+/// genera una respuesta con tu estilo y se envía SOLO tras confirmarla.
+struct MailInbox: View {
     @EnvironmentObject var store: AssistantStore
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if !store.mailConnected {
-                    ContentUnavailableView("Conecta tu correo",
-                        systemImage: "envelope.badge",
-                        description: Text("Añade tu cuenta de correo en Ajustes para leer y responder desde Atlas."))
-                } else {
-                    List {
-                        if let s = store.mailStatus {
-                            Text(s).font(.caption).foregroundStyle(.secondary)
-                        }
-                        if store.emails.isEmpty && !store.mailBusy {
-                            ContentUnavailableView("Bandeja vacía",
-                                systemImage: "tray",
-                                description: Text("Desliza hacia abajo para actualizar."))
-                        }
-                        ForEach(store.emails) { email in
-                            NavigationLink { MailDetailView(email: email) } label: { MailRow(email: email) }
-                        }
+        Group {
+            if !store.mailConnected {
+                ContentUnavailableView("Conecta tu correo",
+                    systemImage: "envelope.badge",
+                    description: Text("Añade tu cuenta de correo en Ajustes para leer y responder desde Atlas."))
+            } else {
+                List {
+                    if let s = store.mailStatus {
+                        Text(s).font(.caption).foregroundStyle(.secondary)
                     }
-                    .refreshable { await store.loadInbox() }
-                }
-            }
-            .navigationTitle("Correo")
-            .toolbar {
-                if store.mailBusy {
-                    ProgressView()
-                } else if store.mailConnected {
-                    Button { Task { await store.loadInbox() } } label: {
-                        Image(systemName: "arrow.clockwise")
+                    if store.emails.isEmpty && !store.mailBusy {
+                        ContentUnavailableView("Bandeja vacía",
+                            systemImage: "tray",
+                            description: Text("Desliza hacia abajo para actualizar."))
+                    }
+                    ForEach(store.emails) { email in
+                        NavigationLink { MailDetailView(email: email) } label: { MailRow(email: email) }
                     }
                 }
+                .refreshable { await store.loadInbox() }
             }
-            .task { if store.mailConnected && store.emails.isEmpty { await store.loadInbox() } }
         }
+        .task { if store.mailConnected && store.emails.isEmpty { await store.loadInbox() } }
     }
 }
 
