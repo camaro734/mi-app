@@ -1,4 +1,5 @@
 import Foundation
+import AVFoundation
 #if canImport(Speech)
 import Speech
 #endif
@@ -29,35 +30,92 @@ enum TranscriptionError: LocalizedError {
 /// Disponible solo en plataformas con el framework Speech (iOS), no en watchOS.
 final class AppleSpeechTranscriber: TranscriptionService {
     private let locale: Locale
+    /// SFSpeechRecognizer falla con audios largos (~1 min): se devuelve "sin voz".
+    /// Por eso troceamos las reuniones en segmentos por debajo de ese límite.
+    private let segmentSeconds: Double = 45
+
     init(locale: Locale = Locale(identifier: "es-ES")) { self.locale = locale }
 
     func transcribe(fileURL: URL) async throws -> String {
         try await requestAuthorization()
+
+        let asset = AVURLAsset(url: fileURL)
+        let total = (try? await asset.load(.duration).seconds) ?? 0
+
+        // Audio corto: una sola pasada.
+        if total <= segmentSeconds + 5 {
+            let text = try await recognize(url: fileURL)
+            if text.isEmpty { throw TranscriptionError.noSpeechDetected }
+            return text
+        }
+
+        // Audio largo (reunión): trocear y transcribir por partes, en orden.
+        var pieces: [String] = []
+        var start = 0.0
+        while start < total - 0.3 {
+            let end = min(start + segmentSeconds, total)
+            let segment = try await exportSegment(asset: asset, from: start, to: end)
+            let text = (try? await recognize(url: segment)) ?? ""
+            try? FileManager.default.removeItem(at: segment)
+            if !text.isEmpty { pieces.append(text) }
+            start = end
+        }
+
+        let full = pieces.joined(separator: " ").trimmingCharacters(in: .whitespacesAndNewlines)
+        if full.isEmpty { throw TranscriptionError.noSpeechDetected }
+        return full
+    }
+
+    /// Reconoce un fichero de audio corto (≤ ~1 min). Devuelve "" si no hay voz.
+    private func recognize(url: URL) async throws -> String {
         guard let recognizer = SFSpeechRecognizer(locale: locale),
               recognizer.isAvailable else {
             throw TranscriptionError.engineUnavailable("Reconocedor no disponible para \(locale.identifier).")
         }
-        let request = SFSpeechURLRecognitionRequest(url: fileURL)
-        // Privado y sin red si el modelo en español está en el dispositivo; si
-        // no, se usa el reconocimiento por servidor en lugar de fallar.
+        let request = SFSpeechURLRecognitionRequest(url: url)
         request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
         request.shouldReportPartialResults = false
 
         return try await withCheckedThrowingContinuation { continuation in
+            var resumed = false
             recognizer.recognitionTask(with: request) { result, error in
+                if resumed { return }
                 if let error {
+                    resumed = true
                     continuation.resume(throwing: error)
                     return
                 }
                 guard let result, result.isFinal else { return }
-                let text = result.bestTranscription.formattedString
-                if text.isEmpty {
-                    continuation.resume(throwing: TranscriptionError.noSpeechDetected)
-                } else {
-                    continuation.resume(returning: text)
-                }
+                resumed = true
+                continuation.resume(returning: result.bestTranscription.formattedString)
             }
         }
+    }
+
+    /// Exporta un trozo [start, end] del audio a un m4a temporal (sin recodificar).
+    private func exportSegment(asset: AVURLAsset, from start: Double, to end: Double) async throws -> URL {
+        let out = AudioRecorder.recordingsDirectory
+            .appendingPathComponent("seg-\(UUID().uuidString).m4a")
+        try? FileManager.default.removeItem(at: out)
+
+        guard let export = AVAssetExportSession(asset: asset,
+                                                presetName: AVAssetExportPresetPassthrough) else {
+            throw TranscriptionError.engineUnavailable("No se pudo preparar el audio para trocear.")
+        }
+        export.outputURL = out
+        export.outputFileType = .m4a
+        export.timeRange = CMTimeRange(
+            start: CMTime(seconds: start, preferredTimescale: 600),
+            end: CMTime(seconds: end, preferredTimescale: 600))
+
+        await withCheckedContinuation { cont in
+            export.exportAsynchronously { cont.resume() }
+        }
+        guard export.status == .completed else {
+            throw TranscriptionError.engineUnavailable(
+                export.error?.localizedDescription ?? "Error al trocear el audio.")
+        }
+        return out
     }
 
     private func requestAuthorization() async throws {
