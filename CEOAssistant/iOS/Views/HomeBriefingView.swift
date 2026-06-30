@@ -3,11 +3,15 @@ import SwiftUI
 /// Pantalla "Hoy": briefing matinal con saludo, agenda, prioridades y próxima cita.
 struct HomeBriefingView: View {
     @EnvironmentObject var store: AssistantStore
+    @Binding var selection: Int
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    QuickActions(selection: $selection)
+
                     if let next = store.nextAppointment {
                         NextAppointmentCard(appointment: next)
                     }
@@ -36,8 +40,39 @@ struct HomeBriefingView: View {
                     }
                     .disabled(store.isBusy)
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showSettings = true } label: { Image(systemName: "gearshape") }
+                }
             }
             .overlay { if store.isBusy { ProgressView().controlSize(.large) } }
+            .sheet(isPresented: $showSettings) { SettingsView() }
+        }
+    }
+
+    private struct QuickActions: View {
+        @Binding var selection: Int
+        private let cols = Array(repeating: GridItem(.flexible(), spacing: 10), count: 4)
+
+        var body: some View {
+            LazyVGrid(columns: cols, spacing: 10) {
+                tile("Grabar", "mic.fill", .red, 3)
+                tile("Correo", "envelope.fill", .blue, 1)
+                tile("Asesor", "brain.head.profile", .indigo, 2)
+                tile("Empresa", "building.2.fill", .teal, 4)
+            }
+        }
+
+        private func tile(_ title: String, _ icon: String, _ color: Color, _ tab: Int) -> some View {
+            Button { selection = tab } label: {
+                VStack(spacing: 6) {
+                    Image(systemName: icon).font(.title2).foregroundStyle(color)
+                    Text(title).font(.caption2).foregroundStyle(.primary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
         }
     }
 

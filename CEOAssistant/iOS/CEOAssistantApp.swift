@@ -24,24 +24,22 @@ struct ContentView: View {
 
     var body: some View {
         TabView(selection: $selection) {
-            HomeBriefingView()
+            HomeBriefingView(selection: $selection)
                 .tabItem { Label("Hoy", systemImage: "sun.max.fill") }.tag(0)
             MailView()
                 .tabItem { Label("Correo", systemImage: "envelope.fill") }.tag(1)
             AdvisorView()
                 .tabItem { Label("Asesor", systemImage: "brain.head.profile") }.tag(2)
-            CompanyHubView()
-                .tabItem { Label("Empresa", systemImage: "building.2.fill") }.tag(3)
             RecordingsView()
-                .tabItem { Label("Reuniones", systemImage: "waveform") }.tag(4)
-            SettingsView()
-                .tabItem { Label("Ajustes", systemImage: "gearshape.fill") }.tag(5)
+                .tabItem { Label("Reuniones", systemImage: "waveform") }.tag(3)
+            CompanyHubView()
+                .tabItem { Label("Empresa", systemImage: "building.2.fill") }.tag(4)
         }
         .tint(.indigo)
         // Reacciona a los atajos de Siri que abren la app en una pantalla.
         .onChange(of: router.pendingAction) { action in
             switch action {
-            case .record: selection = 4
+            case .record: selection = 3
             case .advisor: selection = 2
             case .briefing: selection = 0
             case .none: break
