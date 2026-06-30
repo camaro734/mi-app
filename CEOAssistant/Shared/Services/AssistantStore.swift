@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AVFoundation
 
 /// Estado central de la app y orquestador de los servicios. La UI (iOS y Watch)
 /// observa este objeto. Persiste en disco como JSON simple.
@@ -78,11 +79,16 @@ final class AssistantStore: ObservableObject {
             statusMessage = "Resumen listo."
         } catch {
             rec.status = .failed
-            var reason = error.localizedDescription
+            var parts: [String] = []
             if let attrs = try? FileManager.default.attributesOfItem(atPath: audioURL.path),
                let size = attrs[.size] as? Int {
-                reason += "  ·  audio recibido: \(size / 1024) KB"
+                parts.append("\(size / 1024) KB")
             }
+            if let dur = try? await AVURLAsset(url: audioURL).load(.duration).seconds, dur > 0 {
+                parts.append("audio \(Int(dur.rounded()))s")
+            }
+            parts.append("crono \(Int(rec.duration.rounded()))s")
+            let reason = error.localizedDescription + "  ·  " + parts.joined(separator: " · ")
             rec.errorText = reason
             upsert(rec)
             statusMessage = "Error: \(reason)"
